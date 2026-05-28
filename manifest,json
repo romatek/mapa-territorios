@@ -1,0 +1,9 @@
+{
+  "name":"Mapa Territorios",
+  "short_name":"Mapa",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#ffffff",
+  "theme_color":"#3388ff",
+  "icons":[]
+}
