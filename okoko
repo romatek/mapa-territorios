@@ -1,0 +1,38 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyBAoY4Qt3_E0iWIS2z-CxAbW7xoKx9GgHM",
+  authDomain: "mapamallas.firebaseapp.com",
+  projectId: "mapamallas",
+  storageBucket: "mapamallas.appspot.com",
+  messagingSenderId: "771420817036",
+  appId: "1:771420817036:web:38712f77f74d30f3d7dda9"
+};
+
+
+
+    // 3. Tu API key de OpenWeatherMap (gratis registrándote)
+    const apiKey = "c3f0c0d3847e95f9992bf0ba7ae2f19c";
+
+    // 4. Función para obtener clima y mostrar ícono
+    async function mostrarClima(lat, lon) {
+      // Llamada a la API
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=es`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+
+      // Ícono del clima (OpenWeather provee un código)
+      const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+
+      // Crear marcador con ícono
+      const iconoClima = L.icon({
+        iconUrl: iconUrl,
+        iconSize: [50, 50]
+      });
+
+      L.marker([lat, lon], { icon: iconoClima })
+        .addTo(map)
+        .bindPopup(`🌡 ${data.main.temp}°C<br>${data.weather[0].description}`);
+    }
+
+    // 5. Ejemplo: mostrar clima en dos zonas
+    mostrarClima(-38.1, -57.6); // Chapadmalal
+    mostrarClima(-38.0, -57.55); // Otra zona cercana

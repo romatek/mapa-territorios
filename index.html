@@ -14,1380 +14,312 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3388ff">
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
 
 <style>
 
 body{
-  margin:0;
-  font-family:Arial;
+    margin:0;
+    font-family:Arial,sans-serif;
 }
 
 #map{
-  height:100vh;
-  width:100%;
+    width:100%;
+    height:100vh;
 }
 
 button{
-  cursor:pointer;
+    cursor:pointer;
+    font-size:14px;
 }
 
 #login,
+#toggleLocation,
+#misPuntos,
 #verNotas,
 #editarMallas,
-#toggleLocation,
-#verRanking{
+#verRanking,
+#administrarAdmins,
+#administrarPuntos,
+#toggleClima{
 
-  position:absolute;
-  right:10px;
-  z-index:1000;
+    position:absolute;
+    right:10px;
+    z-index:1000;
 
-  padding:8px;
+    padding:8px 10px;
 
-  border:none;
-  border-radius:8px;
+    border:none;
+    border-radius:8px;
 
-  background:white;
+    background:white;
 
-  box-shadow:0 0 5px rgba(0,0,0,0.3);
-
+    box-shadow:0 0 5px rgba(0,0,0,.3);
 }
 
-#login{ top:10px; }
-#verNotas{ top:50px; }
-#editarMallas{ top:90px; }
-#toggleLocation{ top:130px; }
-#verRanking{ top:170px; display:none; }
+/* SIEMPRE VISIBLES */
+
+#login{
+    top:10px;
+}
+
+#toggleLocation{
+    top:50px;
+}
+
+/* SOLO ADMIN */
+
+#verNotas{
+    top:90px;
+    display:none;
+}
+
+#editarMallas{
+    top:130px;
+    display:none;
+}
+
+#verRanking{
+    top:170px;
+    display:none;
+}
+
+#administrarAdmins{
+    top:210px;
+    display:none;
+}
+
+#administrarPuntos{
+    top:250px;
+    display:none;
+}
+
+#misPuntos{
+    top:290px;
+    display:none;
+}
+
+#toggleClima{
+    top:330px;
+    display:none;
+}
+
+/* PANELES */
 
 .panel{
 
-  display:none;
+    display:none;
 
-  position:absolute;
+    position:absolute;
 
-  top:220px;
-  right:10px;
+    top:340px;
+    right:10px;
 
-  width:300px;
-  max-height:400px;
+    width:300px;
+    max-height:400px;
 
-  overflow:auto;
+    overflow:auto;
 
-  background:white;
+    background:white;
 
-  padding:10px;
+    padding:10px;
 
-  border-radius:10px;
+    border-radius:10px;
 
-  z-index:1000;
+    z-index:1000;
 
-  box-shadow:0 0 10px rgba(0,0,0,0.3);
+    box-shadow:0 0 10px rgba(0,0,0,.3);
 
 }
 
 #estadoConexion{
 
-  position:absolute;
+    position:absolute;
 
-  bottom:10px;
-  left:10px;
+    bottom:10px;
+    left:10px;
 
-  z-index:1000;
+    z-index:1000;
 
-  background:white;
+    background:white;
 
-  padding:8px 12px;
+    padding:8px 12px;
 
-  border-radius:10px;
+    border-radius:10px;
 
-  box-shadow:0 0 5px rgba(0,0,0,0.3);
+    box-shadow:0 0 5px rgba(0,0,0,.3);
 
 }
 
+input{
+    font-size:14px;
+}
+
+/* =========================
+   NOMBRE DE LOS PUNTOS
+========================= */
+
+.nombrePuntoAdmin{
+
+    background:rgba(255,255,255,.95);
+
+    border:1px solid #333;
+
+    border-radius:8px;
+
+    padding:4px 8px;
+
+    color:#000;
+
+    font-weight:bold;
+
+    font-size:13px;
+
+    box-shadow:0 0 6px rgba(0,0,0,.35);
+
+}
+
+/* =========================
+   NOMBRE DE LOS TERRITORIOS
+========================= */
+
+.nombreTerritorio{
+
+    background:transparent !important;
+
+    border:none !important;
+
+    box-shadow:none !important;
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    text-shadow:
+        -2px -2px 3px black,
+         2px -2px 3px black,
+        -2px  2px 3px black,
+         2px  2px 3px black;
+
+    pointer-events:none;
+
+}
+
+.nombreTerritorio::before{
+
+    display:none !important;
+
+}
+
+
 </style>
+
 </head>
+
 <body>
 
 <div id="map"></div>
 
-<button id="login">Login Admin</button>
-<button id="verNotas">Ver notas</button>
-<button id="editarMallas">Editar mallas</button>
-<button id="toggleLocation">Activar ubicación</button>
-<button id="verRanking">Ranking</button>
+<!-- SIEMPRE VISIBLES -->
+
+<button id="login">🔐 Login Admin</button>
+
+<button id="toggleLocation">📍 Mi ubicación</button>
+
+<button id="misPuntos">⭐ Mis puntos</button>
+
+<button id="toggleClima">🌤 Clima</button>
+
+<!-- SOLO ADMIN -->
+
+<button id="verNotas">📄 Ver notas</button>
+
+<button id="editarMallas">🗺️ Editar mallas</button>
+
+<button id="verRanking">🏆 Ranking</button>
+
+<button id="administrarAdmins">👥 Administradores</button>
+
+<button id="administrarPuntos">📍 Puntos</button>
 
 <div id="estadoConexion">
 🌐 Online
 </div>
 
 <!-- NOTAS -->
+
 <div id="notas-section" class="panel">
 
-  <h3>📫 Notas</h3>
+<h3>📫 Notas</h3>
 
-  <button onclick="cerrarNotas()">
-    Cerrar
-  </button>
+<button onclick="cerrarNotas()">Cerrar</button>
 
-  <div id="lista-notas"></div>
+<div id="lista-notas"></div>
 
 </div>
 
 <!-- MALLAS -->
+
 <div id="mallas-section" class="panel">
 
-  <h3>Mallas</h3>
+<h3>🗺️ Mallas</h3>
 
-  <button onclick="cerrarMallas()">
-    Cerrar
-  </button>
+<button onclick="cerrarMallas()">Cerrar</button>
 
-  <div id="lista-mallas"></div>
+<div id="lista-mallas"></div>
 
 </div>
 
 <!-- RANKING -->
+
 <div id="ranking-section" class="panel">
 
-  <h3>🏆 Ranking</h3>
+<h3>🏆 Ranking</h3>
 
-  <button onclick="cerrarRanking()">
-    Cerrar
-  </button>
+<button onclick="cerrarRanking()">Cerrar</button>
 
-  <h4>🚩 Más completadas</h4>
+<h4>🚩 Más completadas</h4>
 
-  <div id="ranking-completadas"></div>
+<div id="ranking-completadas"></div>
 
-  <h4>🕒 Últimas notas</h4>
+<h4>🕒 Últimas notas</h4>
 
-  <div id="ranking-recientes"></div>
+<div id="ranking-recientes"></div>
+
+</div>
+
+<!-- ADMINISTRADORES -->
+
+<div id="admins-section" class="panel">
+
+<h3>👥 Administradores</h3>
+
+<button onclick="cerrarAdmins()">Cerrar</button>
+
+<div id="lista-admins"></div>
+
+<hr>
+
+<input
+id="nuevoAdminEmail"
+type="email"
+placeholder="Correo del nuevo administrador"
+style="width:100%;margin-bottom:10px;"
+>
+
+<button id="agregarAdmin">
+Agregar administrador
+</button>
 
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
 
-<script type="module">
+<script type="module" src="app.js"></script>
 
-// =========================
-// FIREBASE
-// =========================
-
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  deleteDoc,
-  updateDoc,
-  query,
-  where
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBAoY4Qt3_E0iWIS2z-CxAbW7xoKx9GgHM",
-  authDomain: "mapamallas.firebaseapp.com",
-  projectId: "mapamallas",
-  storageBucket: "mapamallas.appspot.com",
-  messagingSenderId: "771420817036",
-  appId: "1:771420817036:web:38712f77f74d30f3d7dda9"
-};
-
-const app = initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
-
-const db = getFirestore(app);
-
-// =========================
-// ADMIN
-// =========================
-
-const ADMIN_UID =
-"KolvU0ctiZYnTNCzWpbCylLoxRJ3";
-
-const ADMIN_PASSWORD =
-"123admin";
-
-let currentUser = null;
-
-// =========================
-// ESTADO CONEXION
-// =========================
-
-function actualizarEstadoConexion(){
-
-  const estado =
-  document.getElementById(
-    "estadoConexion"
-  );
-
-  if(navigator.onLine){
-
-    estado.innerHTML =
-    "🌐 Online";
-
-  }else{
-
-    estado.innerHTML =
-    "📡 Offline";
-
-  }
-
-}
-
-window.addEventListener(
-  "online",
-  actualizarEstadoConexion
-);
-
-window.addEventListener(
-  "offline",
-  actualizarEstadoConexion
-);
-
-actualizarEstadoConexion();
-
-// =========================
-// CLIMA
-// =========================
-
-const weatherApiKey =
-"c3f0c0d3847e95f9992bf0ba7ae2f19c";
-
-let climaMarkers = [];
-
-function getCentroide(coords){
-
-  let lat = 0;
-  let lng = 0;
-
-  coords.forEach(c => {
-
-    lat += c.lat;
-    lng += c.lng;
-
-  });
-
-  return [
-    lat / coords.length,
-    lng / coords.length
-  ];
-
-}
-
-async function mostrarClimaEnMalla(malla){
-
-  if(!navigator.onLine) return;
-
-  try{
-
-    const coords =
-    malla.getLatLngs()[0];
-
-    const centro =
-    getCentroide(coords);
-
-    const lat = centro[0];
-    const lon = centro[1];
-
-    const url =
-    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${weatherApiKey}&units=metric&lang=es`;
-
-    const resp = await fetch(url);
-
-    const data = await resp.json();
-
-    if(!data.weather) return;
-
-    const iconUrl =
-    `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-
-    const iconoClima = L.icon({
-
-      iconUrl: iconUrl,
-
-      iconSize: [50,50]
-
-    });
-
-    const marker = L.marker(
-      [lat, lon],
-      {
-        icon: iconoClima
-      }
-    ).addTo(map)
-
-    .bindPopup(`
-      🌡 ${data.main.temp}°C
-      <br>
-      ${data.weather[0].description}
-    `);
-
-    climaMarkers.push(marker);
-
-  }catch(err){
-
-    console.error(err);
-
-  }
-
-}
-
-// =========================
-// MAPA
-// =========================
-
-const map = L.map("map")
-.setView([-38.1, -57.63], 13);
-
-L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-).addTo(map);
-
-const drawnItems =
-new L.FeatureGroup();
-
-map.addLayer(drawnItems);
-
-// =========================
-// LOGIN
-// =========================
-
-document
-.getElementById("login")
-.onclick = async ()=>{
-
-  const provider =
-  new GoogleAuthProvider();
-
-  await signInWithPopup(
-    auth,
-    provider
-  );
-
-};
-
-// =========================
-// AUTH
-// =========================
-
-onAuthStateChanged(auth, (user)=>{
-
-  currentUser = user || null;
-
-  if(user){
-
-    document
-    .getElementById("login")
-    .style.display = "none";
-
-    if(user.uid === ADMIN_UID){
-
-      document
-      .getElementById("verRanking")
-      .style.display = "block";
-
-    }
-
-  }
-
-  recargarMapa();
-
-});
-
-// =========================
-// DIBUJO
-// =========================
-
-let drawControl = null;
-
-function activarDibujo(){
-
-  if(drawControl) return;
-
-  drawControl =
-  new L.Control.Draw({
-
-    draw:{
-
-      polygon:true,
-      rectangle:true,
-
-      circle:false,
-      marker:false,
-      polyline:false
-
-    },
-
-    edit:false
-
-  });
-
-  map.addControl(drawControl);
-
-  map.off(L.Draw.Event.CREATED);
-
-  map.on(
-
-    L.Draw.Event.CREATED,
-
-    async function(e){
-
-      const layer = e.layer;
-
-      const coords =
-      layer.getLatLngs()[0]
-      .map(p => ({
-        lat:p.lat,
-        lng:p.lng
-      }));
-
-      const nombre =
-      prompt("Nombre territorio:");
-
-      if(!nombre) return;
-
-      const color =
-      prompt("Color HEX:",
-      "#3388ff");
-
-      await addDoc(
-
-        collection(
-          db,
-          "territorios"
-        ),
-
-        {
-
-          uid:ADMIN_UID,
-
-          nombre,
-
-          color,
-
-          coords
-
-        }
-
-      );
-
-      await recargarMapa();
-
-      cargarMallas();
-
-    }
-
-  );
-
-}
-
-// =========================
-// CREAR TERRITORIO VISUAL
-// =========================
-
-function crearTerritorioVisual(data,id){
-
-  const polygon =
-  L.polygon(
-
-    data.coords,
-
-    {
-
-      color:data.color,
-
-      fillOpacity:0.4
-
-    }
-
-  ).addTo(map);
-
-  if(navigator.onLine){
-
-    mostrarClimaEnMalla(
-      polygon
-    );
-
-  }
-
-  if(currentUser?.uid === ADMIN_UID){
-
-    polygon.bindPopup(`
-
-      <div style="width:200px">
-
-        <h3>${data.nombre}</h3>
-
-        <p>Modo administrador</p>
-
-      </div>
-
-    `);
-
-  }else{
-
-    polygon.bindPopup(`
-
-      <div style="width:200px">
-
-        <h4>${data.nombre}</h4>
-
-        <textarea
-          id="nota-${id}"
-          placeholder="Escribí una nota..."
-          style="
-            width:100%;
-            height:60px;
-          "
-        ></textarea>
-
-        <br><br>
-
-        <label>Fecha:</label>
-
-        <input
-          type="date"
-          id="fecha-${id}"
-          style="width:100%"
-        >
-
-        <br><br>
-
-        <label>
-
-          <input
-            type="checkbox"
-            id="check-${id}"
-          >
-
-          Completado
-
-        </label>
-
-        <br><br>
-
-        <button
-          onclick="guardarNota('${id}')"
-        >
-          Guardar
-        </button>
-
-      </div>
-
-    `);
-
-  }
-
-}
-
-// =========================
-// OFFLINE
-// =========================
-
-function cargarTerritoriosOffline(){
-
-  const guardados =
-
-  JSON.parse(
-
-    localStorage.getItem(
-      "territorios"
-    )
-
-  ) || [];
-
-  if(guardados.length === 0){
-
-    console.log(
-      "No hay territorios offline"
-    );
-
-    return;
-
-  }
-
-  guardados.forEach(t => {
-
-    crearTerritorioVisual(
-      t,
-      t.id
-    );
-
-  });
-
-}
-
-// =========================
-// TERRITORIOS
-// =========================
-
-async function cargarTerritorios(){
-
-  if(navigator.onLine){
-
-    try{
-
-      const q = query(
-
-        collection(
-          db,
-          "territorios"
-        ),
-
-        where(
-          "uid",
-          "==",
-          ADMIN_UID
-        )
-
-      );
-
-      const snapshot =
-      await getDocs(q);
-
-      const territoriosLocal = [];
-
-      snapshot.forEach(docSnap => {
-
-        const data =
-        docSnap.data();
-
-        territoriosLocal.push({
-
-          id:docSnap.id,
-          ...data
-
-        });
-
-        crearTerritorioVisual(
-          data,
-          docSnap.id
-        );
-
-      });
-
-      localStorage.setItem(
-
-        "territorios",
-
-        JSON.stringify(
-          territoriosLocal
-        )
-
-      );
-
-      console.log(
-        "Territorios guardados offline ✅"
-      );
-
-    }catch(err){
-
-      console.error(err);
-
-      cargarTerritoriosOffline();
-
-    }
-
-  }else{
-
-    cargarTerritoriosOffline();
-
-  }
-
-}
-
-// =========================
-// GUARDAR NOTA
-// =========================
-
-window.guardarNota =
-async function(id){
-
-  const texto =
-  document.getElementById(
-    `nota-${id}`
-  ).value;
-
-  const fecha =
-  document.getElementById(
-    `fecha-${id}`
-  ).value;
-
-  const completado =
-  document.getElementById(
-    `check-${id}`
-  ).checked;
-
-  if(!texto){
-
-    alert("Escribí una nota");
-
-    return;
-
-  }
-
-  await addDoc(
-
-    collection(db,"notas"),
-
-    {
-
-      territorioId:id,
-
-      nota:texto,
-
-      fecha,
-
-      completado,
-
-      timestamp:Date.now()
-
-    }
-
-  );
-
-  alert("Nota guardada ✅");
-
-};
-
-// =========================
-// VER NOTAS
-// =========================
-
-document
-.getElementById("verNotas")
-.onclick = async ()=>{
-
-  const pass =
-  prompt("Contraseña:");
-
-  if(
-    pass === ADMIN_PASSWORD &&
-    currentUser?.uid === ADMIN_UID
-  ){
-
-    document
-    .getElementById(
-      "notas-section"
-    )
-    .style.display = "block";
-
-    cargarNotas();
-
-  }else{
-
-    alert("Acceso denegado");
-
-  }
-
-};
-
-async function cargarNotas(){
-
-  const snapshot =
-  await getDocs(
-    collection(db,"notas")
-  );
-
-  const notas = [];
-
-  snapshot.forEach(docSnap => {
-
-    notas.push({
-
-      id: docSnap.id,
-
-      ...docSnap.data()
-
-    });
-
-  });
-
-  notas.sort(
-    (a,b)=>b.timestamp-a.timestamp
-  );
-
-  const lista =
-  document.getElementById(
-    "lista-notas"
-  );
-
-  lista.innerHTML = "";
-
-  notas.forEach(d => {
-
-    lista.innerHTML += `
-
-      <div style="
-        border-bottom:1px solid #ccc;
-        margin-bottom:10px;
-        padding-bottom:10px;
-      ">
-
-        <p>
-          <strong>Nota:</strong>
-          ${d.nota}
-        </p>
-
-        <p>
-          <strong>Fecha:</strong>
-          ${d.fecha || "Sin fecha"}
-        </p>
-
-        <p>
-          ${
-            d.completado
-            ? "✅ Completado"
-            : "❌ Pendiente"
-          }
-        </p>
-
-        <button
-          onclick="borrarNota('${d.id}')"
-        >
-          Borrar
-        </button>
-
-      </div>
-
-    `;
-
-  });
-
-}
-
-window.borrarNota =
-async function(id){
-
-  await deleteDoc(
-    doc(db,"notas",id)
-  );
-
-  cargarNotas();
-
-};
-
-window.cerrarNotas = ()=>{
-
-  document
-  .getElementById(
-    "notas-section"
-  )
-  .style.display = "none";
-
-};
-
-// =========================
-// MALLAS
-// =========================
-
-document
-.getElementById("editarMallas")
-.onclick = async ()=>{
-
-  const pass =
-  prompt("Contraseña:");
-
-  if(
-    pass === ADMIN_PASSWORD &&
-    currentUser?.uid === ADMIN_UID
-  ){
-
-    const panel =
-    document.getElementById(
-      "mallas-section"
-    );
-
-    if(
-      panel.style.display === "block"
-    ){
-
-      panel.style.display = "none";
-
-      if(drawControl){
-
-        map.removeControl(
-          drawControl
-        );
-
-        drawControl = null;
-
-      }
-
-    }else{
-
-      panel.style.display = "block";
-
-      cargarMallas();
-
-      activarDibujo();
-
-    }
-
-  }else{
-
-    alert("Acceso denegado");
-
-  }
-
-};
-
-async function cargarMallas(){
-
-  const snapshot =
-  await getDocs(
-    collection(db,"territorios")
-  );
-
-  const lista =
-  document.getElementById(
-    "lista-mallas"
-  );
-
-  lista.innerHTML = "";
-
-  snapshot.forEach(docSnap => {
-
-    const data =
-    docSnap.data();
-
-    lista.innerHTML += `
-
-      <div style="
-        border-bottom:1px solid #ccc;
-        margin-bottom:10px;
-      ">
-
-        <input
-          id="nombre-${docSnap.id}"
-          value="${data.nombre}"
-          style="width:100%"
-        >
-
-        <br><br>
-
-        <input
-          type="color"
-          id="color-${docSnap.id}"
-          value="${data.color}"
-        >
-
-        <br><br>
-
-        <button
-          onclick="guardarCambios('${docSnap.id}')"
-        >
-          Guardar
-        </button>
-
-        <button
-          onclick="eliminarMalla('${docSnap.id}')"
-        >
-          Eliminar
-        </button>
-
-      </div>
-
-    `;
-
-  });
-
-}
-
-window.guardarCambios =
-async function(id){
-
-  const nombre =
-  document.getElementById(
-    `nombre-${id}`
-  ).value;
-
-  const color =
-  document.getElementById(
-    `color-${id}`
-  ).value;
-
-  await updateDoc(
-
-    doc(
-      db,
-      "territorios",
-      id
-    ),
-
-    {
-
-      nombre,
-      color
-
-    }
-
-  );
-
-  recargarMapa();
-
-};
-
-window.eliminarMalla =
-async function(id){
-
-  if(confirm("¿Eliminar malla?")){
-
-    await deleteDoc(
-      doc(
-        db,
-        "territorios",
-        id
-      )
-    );
-
-    recargarMapa();
-
-    cargarMallas();
-
-  }
-
-};
-
-window.cerrarMallas = ()=>{
-
-  document
-  .getElementById(
-    "mallas-section"
-  )
-  .style.display = "none";
-
-  if(drawControl){
-
-    map.removeControl(
-      drawControl
-    );
-
-    drawControl = null;
-
-  }
-
-};
-
-// =========================
-// RECARGAR MAPA
-// =========================
-
-async function recargarMapa(){
-
-  map.eachLayer(layer => {
-
-    if(
-      layer instanceof L.Polygon
-    ){
-
-      map.removeLayer(layer);
-
-    }
-
-  });
-
-  climaMarkers.forEach(marker => {
-
-    map.removeLayer(marker);
-
-  });
-
-  climaMarkers = [];
-
-  await cargarTerritorios();
-
-}
-
-// =========================
-// UBICACION
-// =========================
-
-let watchId = null;
-
-let userMarker = null;
-
-document
-.getElementById(
-  "toggleLocation"
-)
-.onclick = ()=>{
-
-  if(watchId){
-
-    navigator
-    .geolocation
-    .clearWatch(watchId);
-
-    watchId = null;
-
-    if(userMarker){
-
-      map.removeLayer(
-        userMarker
-      );
-
-    }
-
-    document
-    .getElementById(
-      "toggleLocation"
-    )
-    .innerText =
-    "Activar ubicación";
-
-  }else{
-
-    watchId =
-    navigator
-    .geolocation
-    .watchPosition(pos => {
-
-      const {
-        latitude,
-        longitude
-      } = pos.coords;
-
-      if(userMarker){
-
-        userMarker.setLatLng([
-          latitude,
-          longitude
-        ]);
-
-      }else{
-
-        userMarker =
-        L.marker([
-          latitude,
-          longitude
-        ]).addTo(map);
-
-      }
-
-      map.setView(
-        [
-          latitude,
-          longitude
-        ],
-        15
-      );
-
-    });
-
-    document
-    .getElementById(
-      "toggleLocation"
-    )
-    .innerText =
-    "Desactivar ubicación";
-
-  }
-
-};
-
-// =========================
-// RANKING
-// =========================
-
-document
-.getElementById("verRanking")
-.onclick = async ()=>{
-
-  const pass =
-  prompt("Contraseña:");
-
-  if(
-    pass === ADMIN_PASSWORD &&
-    currentUser?.uid === ADMIN_UID
-  ){
-
-    document
-    .getElementById(
-      "ranking-section"
-    )
-    .style.display = "block";
-
-    cargarRanking();
-
-  }else{
-
-    alert("Acceso denegado");
-
-  }
-
-};
-
-window.cerrarRanking = ()=>{
-
-  document
-  .getElementById(
-    "ranking-section"
-  )
-  .style.display = "none";
-
-};
-
-async function cargarRanking(){
-
-  const notasSnap =
-  await getDocs(
-    collection(db,"notas")
-  );
-
-  const territoriosSnap =
-  await getDocs(
-    collection(db,"territorios")
-  );
-
-  let nombres = {};
-
-  territoriosSnap.forEach(doc => {
-
-    nombres[doc.id] =
-    doc.data().nombre;
-
-  });
-
-  let completadas = {};
-
-  let recientes = [];
-
-  notasSnap.forEach(docSnap => {
-
-    const d =
-    docSnap.data();
-
-    if(d.completado){
-
-      completadas[d.territorioId] =
-      (
-        completadas[d.territorioId] || 0
-      ) + 1;
-
-    }
-
-    recientes.push(d);
-
-  });
-
-  const top =
-  Object.entries(completadas)
-  .sort((a,b)=>b[1]-a[1]);
-
-  recientes.sort(
-    (a,b)=>b.timestamp-a.timestamp
-  );
-
-  document
-  .getElementById(
-    "ranking-completadas"
-  )
-  .innerHTML =
-
-    top.length
-
-    ?
-
-    top.map(x => `
-      <p>
-        <b>
-          ${nombres[x[0]] || "Malla"}
-        </b>
-
-        → ${x[1]} veces
-      </p>
-    `).join("")
-
-    :
-
-    "<p>No hay datos</p>";
-
-  document
-  .getElementById(
-    "ranking-recientes"
-  )
-  .innerHTML =
-
-    recientes.length
-
-    ?
-
-    recientes.slice(0,5)
-    .map(x => `
-      <p>
-
-        <b>
-          ${
-            nombres[x.territorioId]
-            || "Malla"
-          }
-        </b>
-
-        <br>
-
-        ${x.nota}
-
-        (${x.fecha || "sin fecha"})
-
-      </p>
-    `).join("")
-
-    :
-
-    "<p>No hay notas</p>";
-
-}
-// =========================
-// SERVICE WORKER
-// =========================
-
-if("serviceWorker" in navigator){
-
-  window.addEventListener(
-
-    "load",
-
-    ()=>{
-
-      navigator.serviceWorker
-      .register("./sw.js")
-
-      .then(()=>{
-
-        console.log(
-          "PWA activa ✅"
-        );
-
-      })
-
-      .catch(err=>{
-
-        console.error(err);
-
-      });
-
-    }
-
-  );
-
-}
-</script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 const CACHE_NAME =
-"mapa-v1";
+"mapa-v2";
 
 const urlsToCache = [
 
@@ -14,6 +14,10 @@ const urlsToCache = [
   "https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"
 
 ];
+
+// =========================
+// INSTALL
+// =========================
 
 self.addEventListener(
 
@@ -41,6 +45,10 @@ self.addEventListener(
 
 );
 
+// =========================
+// FETCH
+// =========================
+
 self.addEventListener(
 
   "fetch",
@@ -55,11 +63,48 @@ self.addEventListener(
 
       .then(response => {
 
-        return response ||
+        if(response){
 
-        fetch(
+          return response;
+
+        }
+
+        return fetch(
           event.request
-        );
+        )
+
+        .then(networkResponse => {
+
+          // GUARDAR TILES
+          if(
+
+            event.request.url.includes(
+              "tile.openstreetmap.org"
+            )
+
+          ){
+
+            const clone =
+            networkResponse.clone();
+
+            caches.open(
+              CACHE_NAME
+            )
+
+            .then(cache => {
+
+              cache.put(
+                event.request,
+                clone
+              );
+
+            });
+
+          }
+
+          return networkResponse;
+
+        });
 
       })
 
