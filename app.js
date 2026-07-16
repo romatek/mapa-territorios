@@ -2082,7 +2082,7 @@ async function cargarAdmins(){
 
             ${
                 data.rol==="principal"
-                ? "👑 Administrador principal"
+                ? "🛡️ Administrador principal"
                 : "🛡️ Administrador"
             }
 
