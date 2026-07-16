@@ -34,12 +34,10 @@ button{
     font-size:14px;
 }
 
-#login,
+
 #toggleLocation,
-#misPuntos,
 #verNotas,
 #editarMallas,
-#verRanking,
 #administrarAdmins,
 #administrarPuntos,
 #toggleClima{
@@ -58,54 +56,66 @@ button{
     box-shadow:0 0 5px rgba(0,0,0,.3);
 }
 
-/* SIEMPRE VISIBLES */
+#login{
+
+    width:100%;
+
+    padding:12px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:#3388ff;
+
+    color:white;
+
+    font-size:15px;
+
+    box-shadow:none;
+
+}
+
 
 #login{
     top:10px;
 }
 
+
 #toggleLocation{
     top:50px;
 }
 
-/* SOLO ADMIN */
 
 #verNotas{
     top:90px;
     display:none;
 }
 
+
 #editarMallas{
     top:130px;
     display:none;
 }
 
-#verRanking{
+
+#administrarAdmins{
     top:170px;
     display:none;
 }
 
-#administrarAdmins{
+
+#administrarPuntos{
     top:210px;
     display:none;
 }
 
-#administrarPuntos{
+
+#toggleClima{
     top:250px;
     display:none;
 }
 
-#misPuntos{
-    top:290px;
-    display:none;
-}
-
-#toggleClima{
-    top:330px;
-    display:none;
-}
-
-/* PANELES */
 
 .panel{
 
@@ -113,7 +123,7 @@ button{
 
     position:absolute;
 
-    top:340px;
+    top:300px;
     right:10px;
 
     width:300px;
@@ -132,6 +142,7 @@ button{
     box-shadow:0 0 10px rgba(0,0,0,.3);
 
 }
+
 
 #estadoConexion{
 
@@ -152,37 +163,46 @@ button{
 
 }
 
-input{
-    font-size:14px;
-}
 
-/* =========================
-   NOMBRE DE LOS PUNTOS
-========================= */
 
 .nombrePuntoAdmin{
 
-    background:rgba(255,255,255,.95);
+    background:rgba(255,255,255,.90);
 
-    border:1px solid #333;
+    border:1px solid #666;
 
-    border-radius:8px;
+    border-radius:6px;
 
-    padding:4px 8px;
+    padding:2px 5px;
 
     color:#000;
 
     font-weight:bold;
 
-    font-size:13px;
+    font-size:10px;
 
-    box-shadow:0 0 6px rgba(0,0,0,.35);
+    white-space:nowrap;
 
 }
 
-/* =========================
-   NOMBRE DE LOS TERRITORIOS
-========================= */
+
+.iconoPuntoMapa{
+
+    font-size:18px;
+
+    width:24px;
+    height:24px;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    text-shadow:
+    0 0 2px white,
+    0 0 4px black;
+
+}
 
 .nombreTerritorio{
 
@@ -194,15 +214,15 @@ input{
 
     color:white;
 
-    font-size:18px;
+    font-size:15px;
 
     font-weight:bold;
 
     text-shadow:
-        -2px -2px 3px black,
-         2px -2px 3px black,
-        -2px  2px 3px black,
-         2px  2px 3px black;
+        -1.5px -1.5px 2px black,
+         1.5px -1.5px 2px black,
+        -1.5px  1.5px 2px black,
+         1.5px  1.5px 2px black;
 
     pointer-events:none;
 
@@ -214,32 +234,129 @@ input{
 
 }
 
+/*=========================
+PANTALLA INICIAL
+=========================*/
+
+#pantallaInicio{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.55);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:5000;
+
+}
+
+#loginBox{
+
+    width:360px;
+
+    background:white;
+
+    border-radius:14px;
+
+    padding:25px;
+
+    text-align:center;
+
+    box-shadow:0 0 20px rgba(0,0,0,.35);
+
+}
+
+#loginBox h1{
+
+    margin-top:0;
+
+}
+
+#loginBox button{
+
+    width:100%;
+
+    margin-top:10px;
+
+    padding:12px;
+
+    border:none;
+
+    border-radius:8px;
+
+    font-size:15px;
+
+}
+
+#continuarInvitado{
+
+    background:#e5e5e5;
+
+}
+
 
 </style>
 
 </head>
 
+
 <body>
 
 <div id="map"></div>
 
-<!-- SIEMPRE VISIBLES -->
+<!-- =========================
+     PANTALLA DE BIENVENIDA
+========================= -->
 
-<button id="login">🔐 Login Admin</button>
+<div id="pantallaInicio">
+
+    <div id="loginBox">
+
+        <h1>🗺️ Mapa Territorios</h1>
+
+        <p>
+            Para acceder a todas las funciones
+            iniciá sesión.
+        </p>
+
+        <button id="login">
+            🔐 Iniciar sesión con Google
+        </button>
+
+        <button id="continuarInvitado">
+            👁️ Continuar como invitado
+        </button>
+
+        <hr>
+
+        <small>
+            Los usuarios registrados deben ser
+            aprobados por un administrador.
+            Registrarse no otorga permisos de administrador.
+        </small>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+BOTONES
+========================= -->
 
 <button id="toggleLocation">📍 Mi ubicación</button>
 
-<button id="misPuntos">⭐ Mis puntos</button>
-
 <button id="toggleClima">🌤 Clima</button>
-
-<!-- SOLO ADMIN -->
 
 <button id="verNotas">📄 Ver notas</button>
 
 <button id="editarMallas">🗺️ Editar mallas</button>
-
-<button id="verRanking">🏆 Ranking</button>
 
 <button id="administrarAdmins">👥 Administradores</button>
 
@@ -249,7 +366,10 @@ input{
 🌐 Online
 </div>
 
-<!-- NOTAS -->
+
+<!-- =========================
+PANEL NOTAS
+========================= -->
 
 <div id="notas-section" class="panel">
 
@@ -261,7 +381,10 @@ input{
 
 </div>
 
-<!-- MALLAS -->
+
+<!-- =========================
+PANEL MALLAS
+========================= -->
 
 <div id="mallas-section" class="panel">
 
@@ -273,25 +396,10 @@ input{
 
 </div>
 
-<!-- RANKING -->
 
-<div id="ranking-section" class="panel">
-
-<h3>🏆 Ranking</h3>
-
-<button onclick="cerrarRanking()">Cerrar</button>
-
-<h4>🚩 Más completadas</h4>
-
-<div id="ranking-completadas"></div>
-
-<h4>🕒 Últimas notas</h4>
-
-<div id="ranking-recientes"></div>
-
-</div>
-
-<!-- ADMINISTRADORES -->
+<!-- =========================
+PANEL ADMINS
+========================= -->
 
 <div id="admins-section" class="panel">
 
@@ -299,7 +407,14 @@ input{
 
 <button onclick="cerrarAdmins()">Cerrar</button>
 
+<!-- Lista de administradores -->
 <div id="lista-admins"></div>
+
+<hr>
+
+<h3>📨 Solicitudes de usuarios</h3>
+
+<div id="lista-solicitudes"></div>
 
 <hr>
 
@@ -317,6 +432,7 @@ Agregar administrador
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
 
 <script type="module" src="app.js"></script>

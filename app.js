@@ -21,9 +21,6 @@ import {
   doc,
   deleteDoc,
   updateDoc,
-  setDoc,
-  getDoc,
-  onSnapshot,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
@@ -48,10 +45,23 @@ const db = getFirestore(app);
 // =========================
 
 let esAdmin = false;
+let esAdminPrincipal = false;
 
 const ADMIN_PASSWORD = "123admin";
 
 let currentUser = null;
+
+// =========================
+// USUARIOS
+// =========================
+
+let usuarioRegistrado = false;
+
+let usuarioAprobado = false;
+
+let esInvitado = false;
+
+let nombreUsuario = "";
 
 // =========================
 // PUNTOS ADMIN
@@ -64,58 +74,198 @@ let puntosAdmin = [];
 let marcadoresPuntos = [];
 
 // =========================
-// MIS PUNTOS
-// =========================
-
-let modoAgregarMiPunto = false;
-
-let marcadoresMisPuntos = [];
-
-const ICONOS_MIS_PUNTOS = [
-    "📍",
-    "🏠",
-    "⭐",
-    "🚗",
-    "🌳",
-    "⚠️",
-    "🏢",
-    "❤️"
-];
-
-// =========================
 // VERIFICAR ADMIN
 // =========================
 
 async function verificarAdmin(email){
 
-  try{
+    const snapshot = await getDocs(
+        collection(db,"usuarios")
+    );
 
-    const snapshot = await getDocs(collection(db,"admins"));
-
-    let autorizado = false;
+    let admin = false;
 
     snapshot.forEach(docSnap=>{
 
-      const data = docSnap.data();
+        const data = docSnap.data();
 
-      if(
-        data.email &&
-        data.email.toLowerCase() === email.toLowerCase()
-      ){
-        autorizado = true;
-      }
+        console.log("Firestore:", data.email, data.rol);
+
+        if(
+            data.email?.toLowerCase() === email.toLowerCase()
+            &&
+            (
+                data.rol === "admin"
+                ||
+                data.rol === "principal"
+            )
+        ){
+            admin = true;
+        }
 
     });
 
-    return autorizado;
+    return admin;
 
-  }catch(err){
+}
 
-    console.error(err);
+
+// =========================
+// VERIFICAR ADMIN PRINCIPAL
+// =========================
+
+async function verificarAdminPrincipal(email){
+
+    const snapshot = await getDocs(
+        collection(db,"usuarios")
+    );
+
+    let principal = false;
+
+    snapshot.forEach(docSnap=>{
+
+        const data = docSnap.data();
+
+        if(
+            data.email?.toLowerCase() === email.toLowerCase()
+            &&
+            data.rol === "principal"
+        ){
+            principal = true;
+        }
+
+    });
+
+    return principal;
+
+}
+
+
+// =========================
+// VERIFICAR USUARIO
+// =========================
+
+async function verificarUsuario(email){
+
+    const q = query(
+        collection(db,"usuarios"),
+        where("email","==",email)
+    );
+
+    const resultado = await getDocs(q);
+
+    if(resultado.empty){
+        return false;
+    }
+
+    const data = resultado.docs[0].data();
+
+    return data.aprobado === true;
+
+}
+
+
+
+// =========================
+// REGISTRAR USUARIO
+// =========================
+
+async function registrarUsuario(user){
+
+    const q = query(
+        collection(db,"usuarios"),
+        where("email","==",user.email)
+    );
+
+    const resultado = await getDocs(q);
+
+    // Ya existe
+
+    if(!resultado.empty){
+
+        const datos = resultado.docs[0].data();
+
+        if(datos.aprobado){
+
+            alert("✅ Tu cuenta ya fue aprobada.");
+
+            return true;
+
+        }
+
+        alert(
+`⏳ Tu solicitud ya fue enviada.
+
+Esperá que un administrador la apruebe.`
+        );
+
+        return false;
+
+    }
+
+
+
+    const nombre = prompt("Nombre:");
+
+    if(!nombre){
+
+        alert("Solicitud cancelada.");
+
+        return false;
+
+    }
+
+
+
+    const apellido = prompt("Apellido:");
+
+    if(!apellido){
+
+        alert("Solicitud cancelada.");
+
+        return false;
+
+    }
+
+
+
+    await addDoc(
+
+        collection(db,"usuarios"),
+
+        {
+
+            nombre: nombre.trim(),
+
+            apellido: apellido.trim(),
+
+            nombreCompleto:
+                nombre.trim()+" "+apellido.trim(),
+
+            email:user.email,
+
+            aprobado:false,
+
+            rol:"usuario",
+
+            fecha:Date.now()
+
+        }
+
+    );
+
+
+
+    alert(
+
+`✅ Solicitud enviada correctamente.
+
+Cuando un administrador apruebe tu acceso,
+solo tendrás que volver a iniciar sesión.`
+
+    );
 
     return false;
-
-  }
 
 }
 
@@ -306,20 +456,125 @@ const drawnItems = new L.FeatureGroup();
 
 map.addLayer(drawnItems);
 
-// =========================
-// LOGIN
-// =========================
-
 document
 .getElementById("login")
 .onclick = async ()=>{
 
-    const provider = new GoogleAuthProvider();
+try{
 
-    await signInWithPopup(
-        auth,
-        provider
-    );
+
+const provider =
+new GoogleAuthProvider();
+
+
+const resultado =
+await signInWithPopup(
+auth,
+provider
+);
+
+
+const user =
+resultado.user;
+
+
+console.log(
+"Usuario:",
+user.email
+);
+
+
+
+const admin =
+await verificarAdmin(
+user.email
+);
+
+
+const aprobado =
+await verificarUsuario(
+user.email
+);
+
+
+
+console.log(
+"Admin:",
+admin
+);
+
+
+console.log(
+"Aprobado:",
+aprobado
+);
+
+
+
+if(!admin && !aprobado){
+
+
+await registrarSolicitud(user);
+
+
+await auth.signOut();
+
+
+return;
+
+
+}
+
+
+
+alert(
+"Acceso correcto"
+);
+
+
+
+}catch(error){
+
+
+console.error(
+"LOGIN ERROR:",
+error
+);
+
+
+alert(
+error.message
+);
+
+
+}
+
+
+};
+
+// =========================
+// CONTINUAR COMO INVITADO
+// =========================
+
+document
+.getElementById("continuarInvitado")
+.onclick = async()=>{
+
+    esInvitado = true;
+
+    document
+    .getElementById("pantallaInicio")
+    .style.display="none";
+
+    // Mostrar funciones permitidas
+    document.getElementById("toggleLocation").style.display="block";
+    document.getElementById("toggleClima").style.display="block";
+
+    actualizarPosicionBotones();
+
+    console.log("👁️ Usuario invitado");
+
+    await recargarMapa();
 
 };
 
@@ -330,76 +585,159 @@ document
 onAuthStateChanged(auth, async(user)=>{
 
     currentUser = user || null;
+
     esAdmin = false;
+    esAdminPrincipal = false;
+    usuarioAprobado = false;
+    esInvitado = false;
 
-    // Ocultar todo mientras verifica
-    document.getElementById("login").style.display = "none";
-    document.getElementById("toggleClima").style.display = "none";
+    // =========================
+    // OCULTAR BOTONES
+    // =========================
 
-    document.getElementById("verNotas").style.display = "none";
-    document.getElementById("editarMallas").style.display = "none";
-    document.getElementById("verRanking").style.display = "none";
-    document.getElementById("administrarAdmins").style.display = "none";
-    document.getElementById("administrarPuntos").style.display = "none";
+    document.getElementById("toggleLocation").style.display="none";
+    document.getElementById("toggleClima").style.display="none";
+    document.getElementById("verNotas").style.display="none";
+    document.getElementById("editarMallas").style.display="none";
+    document.getElementById("administrarAdmins").style.display="none";
+    document.getElementById("administrarPuntos").style.display="none";
 
-    const btnMisPuntos = document.getElementById("misPuntos");
 
-    if(btnMisPuntos){
 
-        btnMisPuntos.style.display = "none";
+    // =========================
+    // NO HAY SESIÓN
+    // =========================
 
-    }
+    if(!user){
 
-    if(user){
+        console.log("Sin usuario logueado");
 
-        console.log("=================================");
-        console.log("Usuario logueado:",user.email);
+        esInvitado = false;
 
-        esAdmin = await verificarAdmin(user.email);
+        // Siempre volver a mostrar la pantalla inicial
+        document.getElementById("pantallaInicio").style.display="flex";
 
-        console.log("Resultado verificarAdmin():",esAdmin);
+        await recargarMapa();
 
-        // ⭐ Todos los usuarios logueados pueden usar Mis Puntos
-        if(btnMisPuntos){
-
-            btnMisPuntos.style.display = "block";
-
-        }
-
-        if(esAdmin){
-
-            console.log("✅ Usuario reconocido como ADMIN");
-
-            document.getElementById("verNotas").style.display="block";
-            document.getElementById("editarMallas").style.display="block";
-            document.getElementById("verRanking").style.display="block";
-            document.getElementById("administrarAdmins").style.display="block";
-            document.getElementById("administrarPuntos").style.display="block";
-
-            cargarPuntosAdmin();
-
-        }else{
-
-            console.log("👤 Usuario normal");
-
-        }
-
-    }else{
-
-        console.log("No hay usuario logueado");
-
-        document.getElementById("login").style.display="block";
+        return;
 
     }
 
-    // Siempre visible
-    document.getElementById("toggleClima").style.display="block";
 
-    await recargarMapa();
 
-    await cargarMisPuntos();
+    // =========================
+    // HAY USUARIO
+    // =========================
+
+    console.log("=================================");
+    console.log("Google:",user.email);
+
+    document.getElementById("pantallaInicio").style.display="none";
+
+
+
+    // =========================
+    // VERIFICAR PERMISOS
+    // =========================
+
+    esAdmin = await verificarAdmin(user.email);
+
+    esAdminPrincipal = await verificarAdminPrincipal(user.email);
+
+    usuarioAprobado = await verificarUsuario(user.email);
+
+    console.log("ADMIN:",esAdmin);
+    console.log("PRINCIPAL:",esAdminPrincipal);
+    console.log("APROBADO:",usuarioAprobado);
+
+
+
+    // =========================
+    // ADMIN
+    // =========================
+
+    if(esAdmin){
+
+        document.getElementById("toggleLocation").style.display="block";
+        document.getElementById("toggleClima").style.display="block";
+        document.getElementById("verNotas").style.display="block";
+        document.getElementById("editarMallas").style.display="block";
+        document.getElementById("administrarAdmins").style.display="block";
+        document.getElementById("administrarPuntos").style.display="block";
+
+        actualizarPosicionBotones();
+
+        await recargarMapa();
+
+        return;
+
+    }
+
+
+
+    // =========================
+    // USUARIO APROBADO
+    // =========================
+
+    if(usuarioAprobado){
+
+        document.getElementById("toggleLocation").style.display="block";
+        document.getElementById("toggleClima").style.display="block";
+
+        actualizarPosicionBotones();
+
+        await recargarMapa();
+
+        return;
+
+    }
+
+
+
+    // =========================
+    // USUARIO NUEVO
+    // =========================
+
+    await registrarUsuario(user);
+
+    await auth.signOut();
 
 });
+
+// =========================
+// ORDENAR BOTONES
+// =========================
+
+function actualizarPosicionBotones(){
+
+    let top = 10;
+
+    const botones = [
+
+        "toggleLocation",
+        "verNotas",
+        "editarMallas",
+        "administrarAdmins",
+        "administrarPuntos",
+        "toggleClima"
+
+    ];
+
+    botones.forEach(id=>{
+
+        const btn = document.getElementById(id);
+
+        if(btn.style.display !== "none"){
+
+            btn.style.top = top + "px";
+
+            top += 40;
+
+        }
+
+    });
+
+}
 
 // =========================
 // DIBUJO
@@ -530,101 +868,100 @@ function crearTerritorioVisual(data,id){
 
     ).addTo(map);
 
-// =========================
-// NOMBRE DEL TERRITORIO
-// =========================
-
-polygon.bindTooltip(data.nombre,{
-
-    permanent:true,
-    direction:"center",
-    className:"nombreTerritorio",
-    opacity:1
-
-});
-
-polygon.openTooltip();
 
     // =========================
-    // AGREGAR PUNTOS SOBRE MALLAS
+    // NOMBRE DEL TERRITORIO
+    // =========================
+
+    polygon.bindTooltip(data.nombre,{
+
+        permanent:true,
+        direction:"center",
+        className:"nombreTerritorio",
+        opacity:1
+
+    });
+
+    polygon.openTooltip();
+
+
+
+    // =========================
+    // AGREGAR PUNTOS ADMIN SOBRE MALLAS
     // =========================
 
     polygon.on("click", async function(e){
 
+
+        if(!esAdmin) return;
+
+        if(!modoAgregarPunto) return;
+
+
+        L.DomEvent.stopPropagation(e);
+
+
+        const nombre = prompt("Nombre del punto:");
+
+        if(!nombre){
+
+            modoAgregarPunto = false;
+
+            document.getElementById("administrarPuntos").innerText =
+            "📍 Puntos";
+
+            return;
+
+        }
+
+
+        const icono = prompt(
+`Elegí un icono:
+
+🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
+
+Escribí uno de ellos.`,
+"📍");
+
+
+
+        await addDoc(collection(db,"puntosAdmin"),{
+
+
+            nombre:nombre,
+
+            lat:e.latlng.lat,
+
+            lng:e.latlng.lng,
+
+            color:"#3388ff",
+
+            publico:false,
+
+            icono:icono || "📍"
+
+
+        });
+
+
+
+        modoAgregarPunto = false;
+
+
+        document.getElementById("administrarPuntos").innerText =
+        "📍 Puntos";
+
+
+        cargarPuntosAdmin();
+
+
+    });
+
+
+
     // =========================
-    // MIS PUNTOS
+    // CLIMA
     // =========================
-
-    if(modoAgregarMiPunto){
-
-    L.DomEvent.stopPropagation(e);
-
-    await guardarMiPunto(
-        e.latlng.lat,
-        e.latlng.lng
-    );
-
-    modoAgregarMiPunto = false;
-
-    document.getElementById("misPuntos").innerText = "📍 Mis puntos";
-
-    return;
-
-}
-
-    // =========================
-    // PUNTOS ADMIN
-    // =========================
-
-      if(!esAdmin) return;
-
-      if(!modoAgregarPunto) return;
-
-      L.DomEvent.stopPropagation(e);
-
-      const nombre = prompt("Nombre del punto:");
-
-      if(!nombre){
-
-          modoAgregarPunto = false;
-
-          document.getElementById("administrarPuntos").innerText = "📍 Puntos";
-
-          return;
-
-      }
-
-      const icono = prompt(
-  `Elegí un icono:
-
-  🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
-
-  Escribí uno de ellos.`,
-  "📍");
-
-      await addDoc(collection(db,"puntosAdmin"),{
-
-          nombre:nombre,
-
-          lat:e.latlng.lat,
-
-          lng:e.latlng.lng,
-
-          color:"#3388ff",
-
-          publico:false,
-
-          icono:icono || "📍"
-
-      });
-
-      modoAgregarPunto = false;
-
-      document.getElementById("administrarPuntos").innerText = "📍 Puntos";
-
-      cargarPuntosAdmin();
-
-  });
 
     if(navigator.onLine){
 
@@ -632,7 +969,14 @@ polygon.openTooltip();
 
     }
 
+
+
+    // =========================
+    // POPUP ADMIN
+    // =========================
+
     if(esAdmin){
+
 
         polygon.bindPopup(`
 
@@ -646,53 +990,97 @@ polygon.openTooltip();
 
         `);
 
+
+
     }else{
+
+
+        // =========================
+        // POPUP USUARIO + NOTAS
+        // =========================
+
 
         polygon.bindPopup(`
 
             <div style="width:200px">
 
+
                 <h4>${data.nombre}</h4>
 
+
                 <textarea
+
                     id="nota-${id}"
+
                     placeholder="Escribí una nota..."
+
                     style="width:100%;height:60px;"
+
                 ></textarea>
 
+
+
                 <br><br>
+
 
                 <label>Fecha:</label>
 
+
                 <input
+
                     type="date"
+
                     id="fecha-${id}"
+
                     style="width:100%"
+
                 >
 
+
+
                 <br><br>
+
+
 
                 <label>
+
                     <input
+
                         type="checkbox"
+
                         id="check-${id}"
+
                     >
+
                     Completado
+
                 </label>
+
+
 
                 <br><br>
 
+
+
                 <button
+
                     onclick="guardarNota('${id}')"
+
                 >
+
                     Guardar
+
                 </button>
+
+
 
             </div>
 
         `);
 
+
     }
+
 
 }
 
@@ -1489,7 +1877,7 @@ window.cerrarMallas = ()=>{
 
 async function recargarMapa(){
 
-    // Eliminar únicamente las mallas
+    // Eliminar mallas
     map.eachLayer(layer=>{
 
         if(layer instanceof L.Polygon){
@@ -1500,7 +1888,7 @@ async function recargarMapa(){
 
     });
 
-    // Eliminar los iconos del clima
+    // Eliminar clima
     climaMarkers.forEach(marker=>{
 
         if(map.hasLayer(marker)){
@@ -1511,9 +1899,9 @@ async function recargarMapa(){
 
     });
 
-    climaMarkers=[];
+    climaMarkers = [];
 
-    // Eliminar los puntos
+    // Eliminar puntos
     marcadoresPuntos.forEach(marker=>{
 
         if(map.hasLayer(marker)){
@@ -1524,15 +1912,19 @@ async function recargarMapa(){
 
     });
 
-    marcadoresPuntos=[];
+    marcadoresPuntos = [];
 
-    // Volver a cargar todo
+    // Cargar territorios
     await cargarTerritorios();
 
-    // Los puntos deben cargarse para todos
+    // Cargar puntos según el tipo de usuario
+    // Admin -> todos
+    // Usuario aprobado -> solo públicos
+    // Invitado -> ninguno
     await cargarPuntosAdmin();
 
 }
+
 // =========================
 // UBICACION
 // =========================
@@ -1540,8 +1932,6 @@ async function recargarMapa(){
 let watchId = null;
 
 let userMarker = null; // ubicación en vivo
-
-let miPuntoMarker = null; // punto guardado null;
 
 document
 .getElementById(
@@ -1623,368 +2013,6 @@ document
 };
 
 // =========================
-// MIS PUNTOS
-// =========================
-
-document.getElementById("misPuntos").onclick = ()=>{
-
-    if(!currentUser){
-
-        alert("Debes iniciar sesión.");
-        return;
-
-    }
-
-    modoAgregarMiPunto = !modoAgregarMiPunto;
-
-    document.getElementById("misPuntos").innerText =
-        modoAgregarMiPunto
-        ? "❌ Cancelar"
-        : "⭐ Mis puntos";
-
-    if(modoAgregarMiPunto){
-
-        alert("Haz clic en cualquier parte del mapa o sobre una malla.");
-
-    }
-
-};
-
-async function guardarMiPunto(lat,lng){
-
-    if(!modoAgregarMiPunto) return;
-
-    modoAgregarMiPunto = false;
-
-    document.getElementById("misPuntos").innerText = "⭐ Mis puntos";
-
-    const nombre = prompt("Nombre del punto:");
-
-    if(!nombre) return;
-
-    const icono = prompt(
-`Elegí un icono:
-
-🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
-
-o escribí cualquier emoji.`,
-    "📍"
-    );
-
-    await addDoc(collection(db,"misPuntos"),{
-
-        uid:currentUser.uid,
-
-        nombre:nombre,
-
-        lat:lat,
-
-        lng:lng,
-
-        icono:icono || "📍",
-
-        color:"#3388ff"
-
-    });
-
-    cargarMisPuntos();
-
-}
-
-async function cargarMisPuntos(){
-
-    if(!currentUser) return;
-
-    marcadoresMisPuntos.forEach(marker=>{
-
-        if(map.hasLayer(marker)){
-
-            map.removeLayer(marker);
-
-        }
-
-    });
-
-    marcadoresMisPuntos=[];
-
-    const q = query(
-
-        collection(db,"misPuntos"),
-
-        where("uid","==",currentUser.uid)
-
-    );
-
-    const snapshot = await getDocs(q);
-
-    snapshot.forEach(docSnap=>{
-
-        const data = docSnap.data();
-
-        let htmlIcono="";
-
-        if((data.icono||"PIN")==="PIN"){
-
-            htmlIcono=`
-            <svg width="28" height="40" viewBox="0 0 24 24">
-
-                <path
-                    fill="${data.color||"#3388ff"}"
-                    stroke="white"
-                    stroke-width="1.5"
-                    d="M12 2
-                       C8 2 5 5 5 9
-                       C5 14 12 22 12 22
-                       C12 22 19 14 19 9
-                       C19 5 16 2 12 2Z"/>
-
-                <circle
-                    cx="12"
-                    cy="9"
-                    r="3"
-                    fill="white"/>
-
-            </svg>
-            `;
-
-        }else{
-
-            htmlIcono=`
-            <div style="
-                font-size:28px;
-                text-shadow:0 0 3px white,0 0 6px black;
-            ">
-                ${data.icono}
-            </div>
-            `;
-
-        }
-
-        const icono=L.divIcon({
-
-            html:htmlIcono,
-
-            className:"",
-
-            iconSize:[30,40],
-
-            iconAnchor:[15,40]
-
-        });
-
-        const marker=L.marker(
-
-            [data.lat,data.lng],
-
-            {icon:icono}
-
-        ).addTo(map);
-
-        marker.bindTooltip(
-
-            data.nombre,
-
-            {
-
-                permanent:true,
-
-                direction:"top",
-
-                offset:[0,-25],
-
-                className:"nombrePuntoAdmin"
-
-            }
-
-        );
-
-        marker.bindPopup(`
-
-            <b>${data.nombre}</b>
-
-            <br><br>
-
-            <button onclick="eliminarMiPunto('${docSnap.id}')">
-
-            🗑 Eliminar
-
-            </button>
-
-        `);
-
-        marcadoresMisPuntos.push(marker);
-
-    });
-
-}
-
-window.eliminarMiPunto=async(id)=>{
-
-    if(!confirm("¿Eliminar este punto?")) return;
-
-    await deleteDoc(
-
-        doc(db,"misPuntos",id)
-
-    );
-
-    cargarMisPuntos();
-
-};
-// =========================
-// RANKING
-// =========================
-
-document
-.getElementById("verRanking")
-.onclick = async ()=>{
-
-  const pass =
-  prompt("Contraseña:");
-
-  if(
-    pass === ADMIN_PASSWORD &&
-    esAdmin
-  ){
-
-    document
-    .getElementById(
-      "ranking-section"
-    )
-    .style.display = "block";
-
-    cargarRanking();
-
-  }else{
-
-    alert("Acceso denegado");
-
-  }
-
-};
-
-window.cerrarRanking = ()=>{
-
-  document
-  .getElementById(
-    "ranking-section"
-  )
-  .style.display = "none";
-
-};
-
-async function cargarRanking(){
-
-  const notasSnap =
-  await getDocs(
-    collection(db,"notas")
-  );
-
-  const territoriosSnap =
-  await getDocs(
-    collection(db,"territorios")
-  );
-
-  let nombres = {};
-
-  territoriosSnap.forEach(doc => {
-
-    nombres[doc.id] =
-    doc.data().nombre;
-
-  });
-
-  let completadas = {};
-
-  let recientes = [];
-
-  notasSnap.forEach(docSnap => {
-
-    const d =
-    docSnap.data();
-
-    if(d.completado){
-
-      completadas[d.territorioId] =
-      (
-        completadas[d.territorioId] || 0
-      ) + 1;
-
-    }
-
-    recientes.push(d);
-
-  });
-
-  const top =
-  Object.entries(completadas)
-  .sort((a,b)=>b[1]-a[1]);
-
-  recientes.sort(
-    (a,b)=>b.timestamp-a.timestamp
-  );
-
-  document
-  .getElementById(
-    "ranking-completadas"
-  )
-  .innerHTML =
-
-    top.length
-
-    ?
-
-    top.map(x => `
-      <p>
-        <b>
-          ${nombres[x[0]] || "Malla"}
-        </b>
-
-        → ${x[1]} veces
-      </p>
-    `).join("")
-
-    :
-
-    "<p>No hay datos</p>";
-
-  document
-  .getElementById(
-    "ranking-recientes"
-  )
-  .innerHTML =
-
-    recientes.length
-
-    ?
-
-    recientes.slice(0,5)
-    .map(x => `
-      <p>
-
-        <b>
-          ${
-            nombres[x.territorioId]
-            || "Malla"
-          }
-        </b>
-
-        <br>
-
-        ${x.nota}
-
-        (${x.fecha || "sin fecha"})
-
-      </p>
-    `).join("")
-
-    :
-
-    "<p>No hay notas</p>";
-
-}
-
-// =========================
 // ADMINISTRADORES
 // =========================
 
@@ -1994,6 +2022,8 @@ document.getElementById("administrarAdmins").onclick = ()=>{
 
     cargarAdmins();
 
+    cargarSolicitudes();
+
 };
 
 window.cerrarAdmins=()=>{
@@ -2002,60 +2032,425 @@ window.cerrarAdmins=()=>{
 
 };
 
+// =========================
+// ADMINS
+// =========================
+
 async function cargarAdmins(){
 
-    const lista=document.getElementById("lista-admins");
+    const lista = document.getElementById("lista-admins");
 
-    lista.innerHTML="";
+    lista.innerHTML = "";
 
-    const snapshot=await getDocs(collection(db,"admins"));
+    const snapshot = await getDocs(
+        collection(db,"usuarios")
+    );
+
+
+
+    // =========================
+    // ADMINISTRADORES
+    // =========================
+
+    lista.innerHTML += "<h4>👑 Administradores</h4>";
 
     snapshot.forEach(docSnap=>{
 
-        const data=docSnap.data();
+        const data = docSnap.data();
 
-        lista.innerHTML+=`
-        <div style="margin-bottom:10px;border-bottom:1px solid #ccc;padding-bottom:10px;">
+        if(
+            data.rol !== "admin" &&
+            data.rol !== "principal"
+        ) return;
+
+        lista.innerHTML += `
+
+        <div style="
+            border:1px solid #ccc;
+            border-radius:8px;
+            padding:10px;
+            margin-bottom:10px;
+        ">
+
+            <b>${data.nombreCompleto || data.nombre}</b>
+
+            <br>
+
             ${data.email}
+
+            <br><br>
+
+            ${
+                data.rol==="principal"
+                ? "👑 Administrador principal"
+                : "🛡️ Administrador"
+            }
+
+            <br><br>
+
+            ${
+                data.rol==="principal"
+                ? ""
+                : `
+                <button onclick="quitarAdmin('${docSnap.id}')">
+                    ⬇ Quitar administrador
+                </button>
+
+                <button onclick="eliminarUsuario('${docSnap.id}')">
+                    🗑 Eliminar
+                </button>
+                `
+            }
+
         </div>
+
+        `;
+
+    });
+
+
+
+    // =========================
+    // USUARIOS APROBADOS
+    // =========================
+
+    lista.innerHTML += "<hr><h4>✅ Usuarios aprobados</h4>";
+
+    snapshot.forEach(docSnap=>{
+
+        const data = docSnap.data();
+
+        if(!data.aprobado) return;
+
+        if(
+            data.rol==="admin" ||
+            data.rol==="principal"
+        ) return;
+
+        lista.innerHTML += `
+
+        <div style="
+            border:1px solid #ccc;
+            border-radius:8px;
+            padding:10px;
+            margin-bottom:10px;
+        ">
+
+            <b>${data.nombreCompleto || data.nombre}</b>
+
+            <br>
+
+            ${data.email}
+
+            <br><br>
+
+            👤 Usuario
+
+            <br><br>
+
+            <button onclick="hacerAdmin('${docSnap.id}')">
+                👑 Hacer administrador
+            </button>
+
+            <button onclick="eliminarUsuario('${docSnap.id}')">
+                🗑 Eliminar
+            </button>
+
+        </div>
+
         `;
 
     });
 
 }
 
-document.getElementById("agregarAdmin").onclick=async()=>{
+// =========================
+// HACER ADMIN POR EMAIL
+// =========================
 
-    const email=document.getElementById("nuevoAdminEmail").value.trim();
+document.getElementById("agregarAdmin").onclick = async()=>{
 
-    if(email==""){
-        alert("Escribí un correo.");
+    if(!esAdminPrincipal){
+
+        alert("Solo el administrador principal puede agregar administradores.");
+
         return;
+
     }
 
-    await addDoc(collection(db,"admins"),{
-        email
-    });
+    const email = document
+        .getElementById("nuevoAdminEmail")
+        .value
+        .trim()
+        .toLowerCase();
+
+    if(email===""){
+
+        alert("Escribí un correo.");
+
+        return;
+
+    }
+
+    const q = query(
+        collection(db,"usuarios"),
+        where("email","==",email)
+    );
+
+    const resultado = await getDocs(q);
+
+    if(resultado.empty){
+
+        alert("No existe ningún usuario con ese correo.");
+
+        return;
+
+    }
+
+    const documento = resultado.docs[0];
+
+    await updateDoc(
+
+        doc(db,"usuarios",documento.id),
+
+        {
+
+            aprobado:true,
+            rol:"admin"
+
+        }
+
+    );
 
     document.getElementById("nuevoAdminEmail").value="";
 
-    cargarAdmins();
+    alert("✅ Ahora es administrador.");
 
-    alert("Administrador agregado.");
+    cargarAdmins();
+    cargarSolicitudes();
 
 };
+
+// =========================
+// HACER ADMIN
+// =========================
+
+window.hacerAdmin = async(id)=>{
+
+    await updateDoc(
+        doc(db,"usuarios",id),
+        {
+            rol:"admin"
+        }
+    );
+
+    cargarAdmins();
+
+};
+
+// =========================
+// QUITAR ADMIN
+// =========================
+
+window.quitarAdmin = async(id)=>{
+
+    await updateDoc(
+        doc(db,"usuarios",id),
+        {
+            rol:"usuario"
+        }
+    );
+
+    cargarAdmins();
+
+};
+
+// =========================
+// ELIMINAR USUARIO
+// =========================
+
+window.eliminarUsuario = async(id)=>{
+
+    if(!confirm("¿Eliminar este usuario?")) return;
+
+    await deleteDoc(
+        doc(db,"usuarios",id)
+    );
+
+    cargarAdmins();
+    cargarSolicitudes();
+
+};
+
+// =========================
+// SOLICITUDES DE USUARIOS
+// =========================
+
+async function cargarSolicitudes(){
+
+    let html="<hr><h4>📨 Solicitudes</h4>";
+
+    const snapshot=await getDocs(collection(db,"usuarios"));
+
+    snapshot.forEach(docSnap=>{
+
+        const data=docSnap.data();
+
+        if(data.aprobado===true) return;
+
+        html+=`
+
+        <div style="
+            border:1px solid #ccc;
+            border-radius:8px;
+            padding:10px;
+            margin-bottom:10px;
+        ">
+
+            <b>${data.nombre}</b>
+
+            <br>
+
+            ${data.email}
+
+            <br><br>
+
+            <button onclick="aprobarUsuario('${docSnap.id}')">
+                ✅ Aprobar
+            </button>
+
+            <button onclick="rechazarUsuario('${docSnap.id}')">
+                ❌ Rechazar
+            </button>
+
+        </div>
+
+        `;
+
+    });
+
+    document.getElementById("lista-solicitudes").innerHTML = html;
+
+}
+
+// =========================
+// APROBAR
+// =========================
+
+window.aprobarUsuario=async(id)=>{
+
+    await updateDoc(
+
+        doc(db,"usuarios",id),
+
+        {
+
+            aprobado:true
+
+        }
+
+    );
+
+    cargarAdmins();
+
+    cargarSolicitudes();
+
+};
+
+// =========================
+// RECHAZAR
+// =========================
+
+window.rechazarUsuario=async(id)=>{
+
+    if(!confirm("¿Eliminar solicitud?")) return;
+
+    await deleteDoc(
+
+        doc(db,"usuarios",id)
+
+    );
+
+    cargarAdmins();
+
+    cargarSolicitudes();
+
+};
+
+// =========================
+// USUARIOS PENDIENTES
+// =========================
+
+async function cargarUsuariosPendientes(){
+
+    const lista = document.getElementById("lista-admins");
+
+    lista.innerHTML = "<h4>Solicitudes de acceso</h4>";
+
+    const snapshot = await getDocs(collection(db,"usuarios"));
+
+    snapshot.forEach(docSnap=>{
+
+        const data = docSnap.data();
+
+        if(data.aprobado) return;
+
+        lista.innerHTML += `
+
+        <div style="
+            border:1px solid #ccc;
+            padding:10px;
+            margin-bottom:10px;
+            border-radius:8px;
+        ">
+
+            <b>${data.nombre}</b>
+
+            <br>
+
+            ${data.email}
+
+            <br><br>
+
+            <button onclick="aprobarUsuario('${docSnap.id}')">
+
+                ✅ Aprobar
+
+            </button>
+
+        </div>
+
+        `;
+
+    });
+
+}
 
 // =========================
 // PUNTOS ADMIN
 // =========================
 
 const ICONOS_PUNTO=[
-"PIN","🏠","🌳","⚠️","⭐","🚗","⛔","🏢"
+"PIN",
+"🏠",
+"🌳",
+"⚠️",
+"⭐",
+"🚗",
+"⛔",
+"🏢"
 ];
+
+
+// =========================
+// ACTIVAR MODO AGREGAR PUNTO
+// =========================
 
 document.getElementById("administrarPuntos").onclick=()=>{
 
+
     modoAgregarPunto=!modoAgregarPunto;
+
 
     if(modoAgregarPunto){
 
@@ -2071,32 +2466,25 @@ document.getElementById("administrarPuntos").onclick=()=>{
 
 };
 
+
+
+// =========================
+// CREAR PUNTO EN MAPA
+// =========================
+
 map.on("click",async(e)=>{
 
-    // =========================
-    // MIS PUNTOS
-    // =========================
-
-    if(modoAgregarMiPunto){
-
-        await guardarMiPunto(
-            e.latlng.lat,
-            e.latlng.lng
-        );
-
-        return;
-
-    }
-
-    // =========================
-    // PUNTOS ADMIN
-    // =========================
 
     if(!esAdmin) return;
 
     if(!modoAgregarPunto) return;
 
-    const nombre = prompt("Nombre del punto:");
+
+
+    const nombre = prompt(
+        "Nombre del punto:"
+    );
+
 
     if(!nombre){
 
@@ -2108,39 +2496,67 @@ map.on("click",async(e)=>{
 
     }
 
+
+
     const icono = prompt(
 `Elegí un icono:
 
 🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
 
-Escribí uno de ellos.`,
-"📍");
+Escribí uno`,
+"📍"
+);
 
-    await addDoc(collection(db,"puntosAdmin"),{
 
-        nombre,
 
-        lat:e.latlng.lat,
+    await addDoc(
+        collection(db,"puntosAdmin"),
+        {
 
-        lng:e.latlng.lng,
+            nombre,
 
-        color:"#3388ff",
+            lat:e.latlng.lat,
 
-        publico:false,
+            lng:e.latlng.lng,
 
-        icono:icono || "📍"
+            color:"#3388ff",
 
-    });
+            publico:false,
+
+            icono:icono || "📍",
+
+            creadoPor:currentUser.email,
+
+            fecha:Date.now()
+
+        }
+    );
+
+
 
     modoAgregarPunto=false;
 
+
     document.getElementById("administrarPuntos").innerText="📍 Puntos";
+
 
     cargarPuntosAdmin();
 
+
 });
 
+
+
+
+// =========================
+// CARGAR PUNTOS
+// =========================
+
 async function cargarPuntosAdmin(){
+
+
+
+    // borrar puntos viejos
 
     marcadoresPuntos.forEach(m=>{
 
@@ -2152,53 +2568,111 @@ async function cargarPuntosAdmin(){
 
     });
 
+
     marcadoresPuntos=[];
 
-    const snapshot=await getDocs(collection(db,"puntosAdmin"));
+
+
+    const snapshot =
+    await getDocs(
+        collection(db,"puntosAdmin")
+    );
+
+
 
     snapshot.forEach(docSnap=>{
 
+
         const data=docSnap.data();
 
-        if(data.publico!==true && !esAdmin){
+
+
+        // =========================
+        // PERMISOS
+        // =========================
+
+
+        // INVITADO
+        if(esInvitado){
 
             return;
 
         }
 
+
+
+        // USUARIO APROBADO
+        // Solo públicos
+
+        if(
+            !esAdmin &&
+            data.publico !== true
+        ){
+
+            return;
+
+        }
+
+
+
         let htmlIcono="";
 
-        if((data.icono || "PIN")==="PIN"){
+
+
+        if(
+            (data.icono || "PIN")==="PIN"
+        ){
+
 
             htmlIcono=`
-            <svg width="28" height="40" viewBox="0 0 24 24">
-                <path
-                    fill="${data.color || "#3388ff"}"
-                    stroke="white"
-                    stroke-width="1.5"
-                    d="M12 2
-                       C8 2 5 5 5 9
-                       C5 14 12 22 12 22
-                       C12 22 19 14 19 9
-                       C19 5 16 2 12 2Z"/>
-                <circle
-                    cx="12"
-                    cy="9"
-                    r="3"
-                    fill="white"/>
-            </svg>`;
+
+            <svg width="24" height="32" viewBox="0 0 24 24">
+
+            <path
+
+            fill="${data.color || "#3388ff"}"
+
+            stroke="white"
+
+            stroke-width="1.5"
+
+            d="
+            M12 2
+            C8 2 5 5 5 9
+            C5 14 12 22 12 22
+            C12 22 19 14 19 9
+            C19 5 16 2 12 2Z"
+
+            />
+
+            <circle
+            cx="12"
+            cy="9"
+            r="3"
+            fill="white"/>
+
+            </svg>
+
+            `;
+
 
         }else{
 
+
             htmlIcono=`
-            <div style="
-                font-size:28px;
-                text-shadow:0 0 3px white,0 0 6px black;
-            ">
-                ${data.icono}
-            </div>`;
+
+            <div class="iconoPuntoMapa">
+
+            ${data.icono}
+
+            </div>
+
+            `;
 
         }
+
+
+
 
         const icono=L.divIcon({
 
@@ -2206,142 +2680,306 @@ async function cargarPuntosAdmin(){
 
             className:"",
 
-            iconSize:[30,40],
+            iconSize:[24,24],
 
-            iconAnchor:[15,40]
+            iconAnchor:[12,12]
 
         });
 
+
+
         const marcador=L.marker(
-            [data.lat,data.lng],
-            {icon:icono}
+
+            [
+            data.lat,
+            data.lng
+            ],
+
+            {
+                icon:icono
+            }
+
         ).addTo(map);
 
-        marcador.bindTooltip(data.nombre,{
 
-            permanent:true,
+
+
+        marcador.bindTooltip(
+
+            data.nombre,
+
+            {
+
+            permanent:
+            map.getZoom()>=15,
 
             direction:"top",
 
-            offset:[0,-25],
+            offset:[0,-20],
 
             className:"nombrePuntoAdmin"
 
-        });
+            }
+
+        );
+
+
+
+
+
+        // =========================
+        // OPCIONES ADMIN
+        // =========================
 
         if(esAdmin){
 
-            let opcionesIconos="";
+
+            let opciones="";
+
 
             ICONOS_PUNTO.forEach(i=>{
 
-                opcionesIconos+=`
-                <option
-                    value="${i}"
-                    ${(data.icono || "PIN")===i ? "selected":""}
+
+                opciones+=`
+
+                <option value="${i}"
+
+                ${
+                (data.icono||"PIN")===i
+                ?"selected"
+                :""
+                }
+
                 >
-                    ${i==="PIN" ? "📌 Pin (color)" : i}
-                </option>`;
+
+                ${i==="PIN"?"📌 Pin":i}
+
+                </option>
+
+                `;
+
 
             });
 
+
+
             marcador.bindPopup(`
 
-                <b>${data.nombre}</b>
 
-                <br><br>
+            <b>${data.nombre}</b>
 
-                <b>🎨 Color</b>
 
-                <br>
+            <br><br>
 
-                <input
-                    type="color"
-                    value="${data.color || "#3388ff"}"
-                    onchange="cambiarColorPunto('${docSnap.id}',this.value)"
-                >
 
-                <br><br>
+            🎨 Color
 
-                <b>😀 Icono</b>
+            <br>
 
-                <br>
 
-                <select onchange="cambiarIconoPunto('${docSnap.id}',this.value)">
+            <input
 
-                    ${opcionesIconos}
+            type="color"
 
-                </select>
+            value="${data.color || "#3388ff"}"
 
-                <br><br>
+            onchange="
+            cambiarColorPunto('${docSnap.id}',this.value)
+            "
 
-                <button onclick="cambiarVisibilidadPunto('${docSnap.id}',${data.publico?"false":"true"})">
+            >
 
-                    ${data.publico ? "🔒 Hacer privado":"🌍 Hacer público"}
 
-                </button>
+            <br><br>
 
-                <br><br>
 
-                <button onclick="eliminarPuntoAdmin('${docSnap.id}')">
+            😀 Icono
 
-                    🗑 Eliminar
+            <br>
 
-                </button>
+
+            <select
+
+            onchange="
+            cambiarIconoPunto('${docSnap.id}',this.value)
+            "
+
+            >
+
+            ${opciones}
+
+            </select>
+
+
+            <br><br>
+
+
+            <button
+
+            onclick="
+            cambiarVisibilidadPunto(
+            '${docSnap.id}',
+            ${!data.publico}
+            )
+            "
+
+            >
+
+            ${
+            data.publico
+            ?
+            "🔒 Hacer privado"
+            :
+            "🌍 Hacer público"
+            }
+
+            </button>
+
+
+            <br><br>
+
+
+            <button
+
+            onclick="
+            eliminarPuntoAdmin('${docSnap.id}')
+            "
+
+            >
+
+            🗑 Eliminar
+
+            </button>
+
 
             `);
 
+
         }else{
 
+
             marcador.bindPopup(`
-                <b>${data.nombre}</b>
+
+            <b>${data.nombre}</b>
+
             `);
 
         }
 
+
+
         marcadoresPuntos.push(marcador);
 
+
+
     });
+
 
 }
 
+
+
+
+
+// =========================
+// CAMBIAR COLOR
+// =========================
+
 window.cambiarColorPunto=async(id,color)=>{
 
-    await updateDoc(doc(db,"puntosAdmin",id),{
-        color
-    });
+
+    await updateDoc(
+
+        doc(db,"puntosAdmin",id),
+
+        {
+            color
+        }
+
+    );
+
 
     cargarPuntosAdmin();
 
+
 };
+
+
+
+
+// =========================
+// CAMBIAR ICONO
+// =========================
 
 window.cambiarIconoPunto=async(id,icono)=>{
 
-    await updateDoc(doc(db,"puntosAdmin",id),{
-        icono
-    });
+
+    await updateDoc(
+
+        doc(db,"puntosAdmin",id),
+
+        {
+            icono
+        }
+
+    );
+
 
     cargarPuntosAdmin();
 
+
 };
+
+
+
+
+// =========================
+// PUBLICO / PRIVADO
+// =========================
 
 window.cambiarVisibilidadPunto=async(id,publico)=>{
 
-    await updateDoc(doc(db,"puntosAdmin",id),{
-        publico
-    });
+
+    await updateDoc(
+
+        doc(db,"puntosAdmin",id),
+
+        {
+            publico
+        }
+
+    );
+
 
     cargarPuntosAdmin();
+
 
 };
 
+
+
+
+// =========================
+// ELIMINAR
+// =========================
+
 window.eliminarPuntoAdmin=async(id)=>{
 
-    if(!confirm("¿Eliminar este punto?")) return;
 
-    await deleteDoc(doc(db,"puntosAdmin",id));
+    if(!confirm("¿Eliminar este punto?"))
+    return;
+
+
+
+    await deleteDoc(
+
+        doc(db,"puntosAdmin",id)
+
+    );
+
 
     cargarPuntosAdmin();
+
 
 };
 
@@ -2384,3 +3022,35 @@ document.getElementById("toggleClima").onclick=()=>{
         : "🌤 Mostrar clima";
 
 };
+
+// =========================
+// MOSTRAR / OCULTAR NOMBRES SEGÚN ZOOM
+// =========================
+
+map.on("zoomend",()=>{
+
+    const mostrar = map.getZoom() >= 15;
+
+    map.eachLayer(layer=>{
+
+        if(layer.getTooltip){
+
+            const tooltip = layer.getTooltip();
+
+            if(!tooltip) return;
+
+            if(mostrar){
+
+                layer.openTooltip();
+
+            }else{
+
+                layer.closeTooltip();
+
+            }
+
+        }
+
+    });
+
+});
