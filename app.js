@@ -22,7 +22,10 @@ import {
   deleteDoc,
   updateDoc,
   query,
-  where
+  where,
+  setDoc,
+  onSnapshot,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -62,6 +65,14 @@ let usuarioAprobado = false;
 let esInvitado = false;
 
 let nombreUsuario = "";
+
+let menuAbierto = false;
+
+let compartiendoUbicacion = false;
+let watchId = null; // Para guardar el ID del seguimiento y poder detenerlo
+let watchIdFirebase = null;
+
+let usuariosOnline = {};
 
 // =========================
 // PUNTOS ADMIN
@@ -274,24 +285,14 @@ solo tendrás que volver a iniciar sesión.`
 // =========================
 
 function actualizarEstadoConexion(){
-
-  const estado =
-  document.getElementById(
-    "estadoConexion"
-  );
+  // Apuntamos al span específico, no al div completo
+  const texto = document.getElementById("textoConexion");
 
   if(navigator.onLine){
-
-    estado.innerHTML =
-    "🌐 Online";
-
+    texto.innerHTML = "🌐 Online";
   }else{
-
-    estado.innerHTML =
-    "📡 Offline";
-
+    texto.innerHTML = "📡 Offline";
   }
-
 }
 
 window.addEventListener(
@@ -440,116 +441,107 @@ async function mostrarClimaEnMalla(malla){
     }
 
 }
+// =========================
+// MAPA CON ROTACIÓN
+// =========================
+const map = L.map("map", {
+    center: [-38.2, -57.67],
+    zoom: 13,
+    // Configuración de rotación requerida por el plugin
+    rotate: true,
+    touchRotate: true,
+    shiftKeyRotate: true,
+    rotateControl: true
+});
 
 // =========================
-// MAPA
+// CAPAS BASE
 // =========================
+const mapaNormal = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: "© OpenStreetMap"
+});
 
-const map = L.map("map")
-.setView([-38.2, -57.67], 13);
+const mapaSatelite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    attribution: "© Google"
+});
 
-L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-).addTo(map);
+// Agregar la capa inicial al mapa
+mapaNormal.addTo(map);
 
+// Inicializar el control de rotación (brújula)
+L.control.rotate({
+    position: "bottomright",
+    closeOnZeroBearing: true
+}).addTo(map);
+
+// Capa para elementos dibujados (mantiene compatibilidad)
 const drawnItems = new L.FeatureGroup();
-
 map.addLayer(drawnItems);
 
-document
-.getElementById("login")
-.onclick = async ()=>{
+// =========================
+// LÓGICA DE CAMBIO DE MAPA
+// =========================
+let vistaSatelite = false;
+const btnCambiarMapa = document.getElementById("cambiarMapa");
 
-try{
+if (btnCambiarMapa) {
+    btnCambiarMapa.onclick = () => {
+        // Validación de conexión opcional
+        if (!vistaSatelite && !navigator.onLine) {
+            console.warn("⚠️ Sin conexión: las imágenes satelitales podrían no cargar.");
+        }
 
-
-const provider =
-new GoogleAuthProvider();
-
-
-const resultado =
-await signInWithPopup(
-auth,
-provider
-);
-
-
-const user =
-resultado.user;
-
-
-console.log(
-"Usuario:",
-user.email
-);
-
-
-
-const admin =
-await verificarAdmin(
-user.email
-);
-
-
-const aprobado =
-await verificarUsuario(
-user.email
-);
-
-
-
-console.log(
-"Admin:",
-admin
-);
-
-
-console.log(
-"Aprobado:",
-aprobado
-);
-
-
-
-if(!admin && !aprobado){
-
-
-await registrarSolicitud(user);
-
-
-await auth.signOut();
-
-
-return;
-
-
+        if (vistaSatelite) {
+            // Cambiar a Normal
+            map.removeLayer(mapaSatelite);
+            mapaNormal.addTo(map);
+            btnCambiarMapa.innerText = "🛰 Satélite";
+        } else {
+            // Cambiar a Satélite
+            map.removeLayer(mapaNormal);
+            mapaSatelite.addTo(map);
+            btnCambiarMapa.innerText = "🗺️ Mapa";
+        }
+        
+        vistaSatelite = !vistaSatelite;
+    };
+} else {
+    console.warn("⚠️ No se encontró el botón con ID 'cambiarMapa'.");
 }
 
+// =========================
+// LOGIN
+// =========================
 
+document.getElementById("login").onclick = async () => {
+    try {
+        const provider = new GoogleAuthProvider();
+        const resultado = await signInWithPopup(auth, provider);
+        const user = resultado.user;
 
-alert(
-"Acceso correcto"
-);
+        console.log("Usuario:", user.email);
 
+        const admin = await verificarAdmin(user.email);
+        const aprobado = await verificarUsuario(user.email);
 
+        console.log("Admin:", admin);
+        console.log("Aprobado:", aprobado);
 
-}catch(error){
+        if (!admin && !aprobado) {
+            // Cambiado a registrarUsuario para que coincida con tu app.js
+            await registrarUsuario(user); 
+            await auth.signOut();
+            return;
+        }
 
+        alert("Acceso correcto");
 
-console.error(
-"LOGIN ERROR:",
-error
-);
-
-
-alert(
-error.message
-);
-
-
-}
-
-
+    } catch(error) {
+        console.error("LOGIN ERROR:", error);
+        alert(error.message);
+    }
 };
 
 // =========================
@@ -579,164 +571,107 @@ document
 };
 
 // =========================
-// AUTH
+// AUTH Y GESTIÓN DE ACCESO
 // =========================
 
-onAuthStateChanged(auth, async(user)=>{
-
+onAuthStateChanged(auth, async (user) => {
     currentUser = user || null;
-
     esAdmin = false;
     esAdminPrincipal = false;
     usuarioAprobado = false;
-    esInvitado = false;
 
-    // =========================
-    // OCULTAR BOTONES
-    // =========================
+    // 1. Ocultar todos los botones por defecto al iniciar el chequeo
+    const botones = ["toggleLocation", "toggleClima", "verNotas", "editarMallas", "administrarAdmins", "administrarPuntos", "btnCompartirUbicacion"];
+    botones.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.style.display = "none";
+    });
 
-    document.getElementById("toggleLocation").style.display="none";
-    document.getElementById("toggleClima").style.display="none";
-    document.getElementById("verNotas").style.display="none";
-    document.getElementById("editarMallas").style.display="none";
-    document.getElementById("administrarAdmins").style.display="none";
-    document.getElementById("administrarPuntos").style.display="none";
-
-
-
-    // =========================
-    // NO HAY SESIÓN
-    // =========================
-
-    if(!user){
-
+    // 2. CASO: NO HAY SESIÓN
+    if (!user) {
         console.log("Sin usuario logueado");
-
-        esInvitado = false;
-
-        // Siempre volver a mostrar la pantalla inicial
-        document.getElementById("pantallaInicio").style.display="flex";
-
-        await recargarMapa();
-
+        document.getElementById("pantallaInicio").style.display = "flex";
+        
+        // Carga únicamente las mallas públicas para el fondo inicial
+        await recargarMapa(); 
         return;
-
     }
 
-
-
-    // =========================
-    // HAY USUARIO
-    // =========================
-
+    // 3. CASO: HAY USUARIO
     console.log("=================================");
-    console.log("Google:",user.email);
+    console.log("Google:", user.email);
+    document.getElementById("pantallaInicio").style.display = "none";
 
-    document.getElementById("pantallaInicio").style.display="none";
-
-
-
-    // =========================
-    // VERIFICAR PERMISOS
-    // =========================
-
+    // 4. VERIFICAR PERMISOS
     esAdmin = await verificarAdmin(user.email);
-
     esAdminPrincipal = await verificarAdminPrincipal(user.email);
-
     usuarioAprobado = await verificarUsuario(user.email);
 
-    console.log("ADMIN:",esAdmin);
-    console.log("PRINCIPAL:",esAdminPrincipal);
-    console.log("APROBADO:",usuarioAprobado);
+    console.log("ADMIN:", esAdmin, "PRINCIPAL:", esAdminPrincipal, "APROBADO:", usuarioAprobado);
 
+    // 5. LÓGICA DE ACCESO Y MOSTRAR BOTONES
+    if (esAdmin || usuarioAprobado) {
+        // Usuario registrado y autorizado: activar escucha de usuarios online
+        if (typeof escucharOtrosUsuarios === "function") {
+            escucharOtrosUsuarios();
+        }
 
-
-    // =========================
-    // ADMIN
-    // =========================
-
-    if(esAdmin){
-
-        document.getElementById("toggleLocation").style.display="block";
-        document.getElementById("toggleClima").style.display="block";
-        document.getElementById("verNotas").style.display="block";
-        document.getElementById("editarMallas").style.display="block";
-        document.getElementById("administrarAdmins").style.display="block";
-        document.getElementById("administrarPuntos").style.display="block";
-
-        actualizarPosicionBotones();
-
-        await recargarMapa();
-
+        if (esAdmin) {
+            ["toggleLocation", "toggleClima", "verNotas", "editarMallas", "administrarAdmins", "administrarPuntos", "btnCompartirUbicacion"].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.style.display = "block";
+            });
+        } else {
+            // Usuario aprobado normal
+            ["toggleLocation", "toggleClima", "btnCompartirUbicacion"].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.style.display = "block";
+            });
+        }
+    } else {
+        // Usuario NO aprobado: registrar, expulsar y limpiar memoria
+        console.warn("Usuario no aprobado. Cerrando sesión...");
+        await registrarUsuario(user);
+        await auth.signOut();
         return;
-
     }
 
-
-
-    // =========================
-    // USUARIO APROBADO
-    // =========================
-
-    if(usuarioAprobado){
-
-        document.getElementById("toggleLocation").style.display="block";
-        document.getElementById("toggleClima").style.display="block";
-
-        actualizarPosicionBotones();
-
-        await recargarMapa();
-
-        return;
-
-    }
-
-
-
-    // =========================
-    // USUARIO NUEVO
-    // =========================
-
-    await registrarUsuario(user);
-
-    await auth.signOut();
-
+    // 6. FINALIZAR CARGA
+    actualizarPosicionBotones();
+    await recargarMapa();
 });
 
 // =========================
 // ORDENAR BOTONES
 // =========================
 
-function actualizarPosicionBotones(){
+function actualizarPosicionBotones() {
+    let top = 70;
+    const botones = ["btnCompartirUbicacion", "toggleLocation", "verNotas", "editarMallas", "administrarAdmins", "administrarPuntos", "toggleClima"];
+    let delay = 0;
 
-    let top = 10;
-
-    const botones = [
-
-        "toggleLocation",
-        "verNotas",
-        "editarMallas",
-        "administrarAdmins",
-        "administrarPuntos",
-        "toggleClima"
-
-    ];
-
-    botones.forEach(id=>{
-
+    botones.forEach(id => {
         const btn = document.getElementById(id);
+        // Solo posicionar botones que estén visibles
+        if (!btn || btn.style.display === "none") return;
 
-        if(btn.style.display !== "none"){
 
+        btn.classList.add("botonMenu");
+        if (menuAbierto) {
+            btn.style.visibility = "visible";
             btn.style.top = top + "px";
-
+            setTimeout(() => {
+                btn.classList.add("visible");
+            }, delay);
+            delay += 60;
             top += 40;
-
+        } else {
+            btn.classList.remove("visible");
+            setTimeout(() => {
+                btn.style.visibility = "hidden";
+            }, 250);
         }
-
     });
-
 }
 
 // =========================
@@ -852,236 +787,82 @@ function activarDibujo(){
 }
 
 // =========================
-// CREAR TERRITORIO VISUAL
+// CREAR TERRITORIO VISUAL (SIMPLIFICADO)
 // =========================
 
-function crearTerritorioVisual(data,id){
+function crearTerritorioVisual(data, id) {
 
-    const polygon = L.polygon(
+    const polygon = L.polygon(data.coords, { color: data.color, fillOpacity: 0.4 }).addTo(map);
 
-        data.coords,
-
-        {
-            color:data.color,
-            fillOpacity:0.4
-        }
-
-    ).addTo(map);
-
-
-    // =========================
     // NOMBRE DEL TERRITORIO
-    // =========================
-
-    polygon.bindTooltip(data.nombre,{
-
-        permanent:true,
-        direction:"center",
-        className:"nombreTerritorio",
-        opacity:1
-
-    });
-
+    polygon.bindTooltip(data.nombre, { permanent: true, direction: "center", className: "nombreTerritorio", opacity: 1 });
     polygon.openTooltip();
 
-
-
-    // =========================
-    // AGREGAR PUNTOS ADMIN SOBRE MALLAS
-    // =========================
-
-    polygon.on("click", async function(e){
-
-
-        if(!esAdmin) return;
-
-        if(!modoAgregarPunto) return;
-
-
+    // AGREGAR PUNTOS ADMIN
+    polygon.on("click", async function (e) {
+        if (!esAdmin || !modoAgregarPunto) return;
         L.DomEvent.stopPropagation(e);
-
-
         const nombre = prompt("Nombre del punto:");
-
-        if(!nombre){
-
-            modoAgregarPunto = false;
-
-            document.getElementById("administrarPuntos").innerText =
-            "📍 Puntos";
-
-            return;
-
-        }
-
-
-        const icono = prompt(
-`Elegí un icono:
-
-🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
-
-Escribí uno de ellos.`,
-"📍");
-
-
-
-        await addDoc(collection(db,"puntosAdmin"),{
-
-
-            nombre:nombre,
-
-            lat:e.latlng.lat,
-
-            lng:e.latlng.lng,
-
-            color:"#3388ff",
-
-            publico:false,
-
-            icono:icono || "📍"
-
-
-        });
-
-
-
+        if (!nombre) { modoAgregarPunto = false; document.getElementById("administrarPuntos").innerText = "📍 Puntos"; return; }
+        const icono = prompt("Elegí un icono (🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢):", "📍");
+        await addDoc(collection(db, "puntosAdmin"), { nombre, lat: e.latlng.lat, lng: e.latlng.lng, color: "#3388ff", publico: false, icono: icono || "📍" });
         modoAgregarPunto = false;
-
-
-        document.getElementById("administrarPuntos").innerText =
-        "📍 Puntos";
-
-
+        document.getElementById("administrarPuntos").innerText = "📍 Puntos";
         cargarPuntosAdmin();
-
-
     });
 
-
-
-    // =========================
     // CLIMA
-    // =========================
-
-    if(navigator.onLine){
-
-        mostrarClimaEnMalla(polygon);
-
+    if (navigator.onLine) {
+        (async () => {
+            try {
+                const centro = getCentroide(polygon.getLatLngs()[0]);
+                const resp = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${centro[0]}&lon=${centro[1]}&appid=${weatherApiKey}&units=metric&lang=es`);
+                const dataClima = await resp.json();
+                if (!dataClima.weather) return;
+                const emoji = ["⛈️", "🌧️", "❄️", "☀️", "⛅"][(dataClima.weather[0].id >= 800) ? (dataClima.weather[0].id === 800 ? 3 : 4) : (dataClima.weather[0].id < 300 ? 0 : 1)];
+                const marker = L.marker(centro, { icon: L.divIcon({ html: `<div style="font-size: 26px;">${emoji}</div>`, className: "emoji-clima", iconSize: [30, 30] }) }).addTo(map);
+                marker.bindPopup(`🌡️ ${Math.round(dataClima.main.temp)}°C<br>${dataClima.weather[0].description}`);
+                climaMarkers.push(marker);
+                if (!climaVisible) map.removeLayer(marker);
+            } catch (err) { console.error("Error clima:", err); }
+        })();
     }
 
-
-
     // =========================
-    // POPUP ADMIN
+    // POPUPS SEGÚN ROL DE USUARIO
     // =========================
-
-    if(esAdmin){
-
-
+    if (esAdmin) {
+        // 1. VISTA ADMINISTRADOR
         polygon.bindPopup(`
-
             <div style="width:200px">
-
                 <h3>${data.nombre}</h3>
-
                 <p>Modo administrador</p>
-
             </div>
-
         `);
-
-
-
-    }else{
-
-
-        // =========================
-        // POPUP USUARIO + NOTAS
-        // =========================
-
-
+    } else if (esInvitado) {
+        // 2. VISTA INVITADO (Sin formulario para evitar error de permisos)
         polygon.bindPopup(`
-
-            <div style="width:200px">
-
-
+            <div style="width:220px; text-align:center;">
                 <h4>${data.nombre}</h4>
-
-
-                <textarea
-
-                    id="nota-${id}"
-
-                    placeholder="Escribí una nota..."
-
-                    style="width:100%;height:60px;"
-
-                ></textarea>
-
-
-
-                <br><br>
-
-
-                <label>Fecha:</label>
-
-
-                <input
-
-                    type="date"
-
-                    id="fecha-${id}"
-
-                    style="width:100%"
-
-                >
-
-
-
-                <br><br>
-
-
-
-                <label>
-
-                    <input
-
-                        type="checkbox"
-
-                        id="check-${id}"
-
-                    >
-
-                    Completado
-
-                </label>
-
-
-
-                <br><br>
-
-
-
-                <button
-
-                    onclick="guardarNota('${id}')"
-
-                >
-
-                    Guardar
-
-                </button>
-
-
-
+                <p style="font-size:13px; color:#555;">Iniciá sesión con tu cuenta para agregar y gestionar notas en esta malla.</p>
             </div>
-
         `);
-
-
+    } else {
+        // 3. VISTA USUARIO REGISTRADO
+        polygon.bindPopup(`
+            <div style="width:250px">
+                <h4>${data.nombre}</h4>
+                <textarea id="nota-${id}" placeholder="Escribí tu nota aquí..." style="width:100%;height:80px; margin-bottom:5px;"></textarea>
+                <input type="date" id="fecha-${id}" style="width:100%; margin-bottom:10px;">
+                <label style="display:block; margin-bottom:10px; font-size:14px;">
+                    <input type="checkbox" id="check-${id}"> Completado
+                </label>
+                <button onclick="guardarNota('${id}')" style="width:100%; background:#3388ff; color:white; padding:10px; border:none; border-radius:4px; cursor:pointer;">
+                    Guardar Nota
+                </button>
+            </div>
+        `);
     }
-
-
 }
 
 // =========================
@@ -1403,52 +1184,28 @@ async function cargarTerritorios(){
 // GUARDAR NOTA
 // =========================
 
-window.guardarNota =
-async function(id){
+window.guardarNota = async function(id){
 
   try{
 
-    const texto =
-    document.getElementById(
-      `nota-${id}`
-    ).value;
-
-    const fecha =
-    document.getElementById(
-      `fecha-${id}`
-    ).value;
-
-    const completado =
-    document.getElementById(
-      `check-${id}`
-    ).checked;
+    const texto = document.getElementById(`nota-${id}`)?.value;
+    const fecha = document.getElementById(`fecha-${id}`)?.value;
+    const completado = document.getElementById(`check-${id}`)?.checked || false;
 
     if(!texto){
-
       alert("Escribí una nota");
-
       return;
-
     }
 
     await addDoc(
-
       collection(db,"notas"),
-
       {
-
-        territorioId:id,
-
-        nota:texto,
-
-        fecha,
-
-        completado,
-
-        timestamp:Date.now()
-
+        territorioId: id,
+        nota: texto,
+        fecha: fecha,
+        completado: completado,
+        timestamp: Date.now()
       }
-
     );
 
     alert("Nota guardada ✅");
@@ -1456,7 +1213,6 @@ async function(id){
   }catch(err){
 
     console.error("Error guardando nota:", err);
-
     alert("Error: no se pudo guardar la nota");
 
   }
@@ -1603,6 +1359,26 @@ window.cerrarNotas = ()=>{
   )
   .style.display = "none";
 
+};
+
+// =========================
+// BORRAR ACTUALIZACIÓN
+// =========================
+
+window.borrarActualizacion = async function(idMalla, idActualizacion) {
+    if (!esAdmin) return;
+    try {
+        await deleteDoc(doc(db, "mallas", idMalla, "actualizaciones", idActualizacion));
+        alert("Actualización eliminada");
+        cargarNotas(); 
+    } catch (err) {
+        console.error("Error borrando:", err);
+        alert("Error al borrar");
+    }
+};
+
+window.cerrarNotas = () => {
+    document.getElementById("notas-section").style.display = "none";
 };
 
 // =========================
@@ -1914,14 +1690,13 @@ async function recargarMapa(){
 
     marcadoresPuntos = [];
 
-    // Cargar territorios
+    // Cargar territorios (público)
     await cargarTerritorios();
 
-    // Cargar puntos según el tipo de usuario
-    // Admin -> todos
-    // Usuario aprobado -> solo públicos
-    // Invitado -> ninguno
-    await cargarPuntosAdmin();
+    // Cargar puntos solo si NO es invitado Y ADEMÁS hay un usuario logueado en Firebase
+    if (!esInvitado && auth.currentUser) {
+        await cargarPuntosAdmin();
+    }
 
 }
 
@@ -1929,7 +1704,6 @@ async function recargarMapa(){
 // UBICACION
 // =========================
 
-let watchId = null;
 
 let userMarker = null; // ubicación en vivo
 
@@ -2016,24 +1790,24 @@ document
 // ADMINISTRADORES
 // =========================
 
-document.getElementById("administrarAdmins").onclick = ()=>{
+document.getElementById("administrarAdmins").onclick = async () => {
 
-    document.getElementById("admins-section").style.display="block";
+    document.getElementById("admins-section").style.display = "block";
 
-    cargarAdmins();
+    await cargarAdmins();
 
-    cargarSolicitudes();
+    await cargarSolicitudes();
 
 };
 
-window.cerrarAdmins=()=>{
+window.cerrarAdmins = () => {
 
-    document.getElementById("admins-section").style.display="none";
+    document.getElementById("admins-section").style.display = "none";
 
 };
 
 // =========================
-// ADMINS
+// CARGAR ADMINISTRADORES
 // =========================
 
 async function cargarAdmins(){
@@ -2082,7 +1856,7 @@ async function cargarAdmins(){
 
             ${
                 data.rol==="principal"
-                ? "🛡️ Administrador principal"
+                ? "👑 Administrador principal"
                 : "🛡️ Administrador"
             }
 
@@ -2127,6 +1901,60 @@ async function cargarAdmins(){
             data.rol==="principal"
         ) return;
 
+
+
+        // =========================
+        // ESTADO ONLINE
+        // =========================
+
+        let estado = "🔴 Sin compartir ubicación";
+        let botonMapa = "";
+
+        const online = usuariosOnline[docSnap.id];
+
+        if(online){
+
+            const segundos =
+            Math.floor(
+                (Date.now()-online.ultimaActualizacion)/1000
+            );
+
+            let tiempo = "";
+
+            if(segundos<60){
+
+                tiempo = `Hace ${segundos} segundos`;
+
+            }else if(segundos<3600){
+
+                tiempo =
+                `Hace ${Math.floor(segundos/60)} minutes`;
+
+            }else{
+
+                tiempo =
+                `Hace ${Math.floor(segundos/3600)} horas`;
+
+            }
+
+            estado = `
+            🟢 Compartiendo ubicación
+            <br>
+            <small>${tiempo}</small>
+            `;
+
+            botonMapa = `
+            <br><br>
+
+            <button onclick="centrarUsuario('${docSnap.id}')">
+                📍 Ver en mapa
+            </button>
+            `;
+
+        }
+
+
+
         lista.innerHTML += `
 
         <div style="
@@ -2141,6 +1969,12 @@ async function cargarAdmins(){
             <br>
 
             ${data.email}
+
+            <br><br>
+
+            ${estado}
+
+            ${botonMapa}
 
             <br><br>
 
@@ -2163,6 +1997,25 @@ async function cargarAdmins(){
     });
 
 }
+
+window.centrarUsuario = function(id){
+
+    const usuario = usuariosOnline[id];
+
+    if(!usuario){
+
+        alert("Ese usuario ya no está compartiendo ubicación.");
+
+        return;
+
+    }
+
+    map.setView(
+        [usuario.lat,usuario.lng],
+        18
+    );
+
+};
 
 // =========================
 // HACER ADMIN POR EMAIL
@@ -3054,3 +2907,289 @@ map.on("zoomend",()=>{
     });
 
 });
+
+// =========================
+// MENÚ
+// =========================
+
+document.getElementById("menuBoton").onclick = () => {
+    menuAbierto = !menuAbierto;
+    document.getElementById("menuBoton").innerText = menuAbierto ? "✖" : "☰";
+    actualizarPosicionBotones();
+};
+
+// =========================
+// SEGUIMIENTO EN TIEMPO REAL
+// =========================
+
+const marcadoresUsuarios = {};
+
+function activarSeguimiento(userId){
+
+    if(!navigator.geolocation){
+
+        alert("Tu navegador no soporta geolocalización.");
+        return;
+
+    }
+
+    watchIdFirebase = navigator.geolocation.watchPosition(
+
+        async(position)=>{
+
+            const { latitude, longitude } = position.coords;
+
+            await setDoc(
+
+                doc(db,"usuariosOnline",userId),
+
+                {
+
+                    uid:userId,
+
+                    nombre:currentUser.displayName || "Usuario",
+
+                    email:currentUser.email,
+
+                    color:"#2ecc71",
+
+                    compartiendo:true,
+
+                    lat:latitude,
+
+                    lng:longitude,
+
+                    ultimaActualizacion:Date.now()
+
+                }
+
+            );
+
+        },
+
+        (error)=>{
+
+            console.error("Error GPS:",error);
+
+        },
+
+        {
+
+            enableHighAccuracy:true,
+            timeout:5000,
+            maximumAge:0
+
+        }
+
+    );
+
+}
+
+
+
+// =========================
+// ESCUCHAR USUARIOS
+// =========================
+
+function escucharOtrosUsuarios(){
+
+    onSnapshot(
+
+        collection(db,"usuariosOnline"),
+
+        (snapshot)=>{
+
+            snapshot.docChanges().forEach((change)=>{
+
+                const data = change.doc.data();
+
+                const id = change.doc.id;
+
+                usuariosOnline[id] = data;
+
+
+
+                // =========================
+                // AGREGAR / ACTUALIZAR
+                // =========================
+
+                if(
+                    change.type==="added" ||
+                    change.type==="modified"
+                ){
+
+                    if(marcadoresUsuarios[id]){
+
+                        marcadoresUsuarios[id]
+                        .setLatLng([data.lat,data.lng]);
+
+                    }else{
+
+                        const color =
+                        data.color || "#2ecc71";
+
+
+                        const iconoUsuario =
+                        L.divIcon({
+
+                            className:"",
+
+                            html:`
+
+                            <div style="
+                                display:flex;
+                                flex-direction:column;
+                                align-items:center;
+                            ">
+
+                                <div style="
+                                    font-size:12px;
+                                    font-weight:bold;
+                                    color:white;
+                                    text-shadow:0 0 4px black;
+                                    margin-bottom:3px;
+                                    white-space:nowrap;
+                                ">
+
+                                    ${data.nombre || "Usuario"}
+
+                                </div>
+
+                                <div style="
+                                    width:16px;
+                                    height:16px;
+                                    border-radius:50%;
+                                    background:${color};
+                                    border:2px solid white;
+                                    box-shadow:0 0 6px rgba(0,0,0,.45);
+                                "></div>
+
+                            </div>
+
+                            `,
+
+                            iconSize:[40,40],
+
+                            iconAnchor:[20,32]
+
+                        });
+
+
+                        marcadoresUsuarios[id] =
+
+                        L.marker(
+
+                            [data.lat,data.lng],
+
+                            {
+
+                                icon:iconoUsuario
+
+                            }
+
+                        )
+
+                        .addTo(map)
+
+                        .bindPopup(`
+
+                            <b>${data.nombre || "Usuario"}</b>
+
+                            <br>
+
+                            ${data.email || ""}
+
+                        `);
+
+                    }
+
+                }
+
+
+
+                // =========================
+                // ELIMINAR
+                // =========================
+
+                if(change.type==="removed"){
+
+                  delete usuariosOnline[id]
+
+                  if(marcadoresUsuarios[id]){
+
+                      map.removeLayer(
+                          marcadoresUsuarios[id]
+                      );
+
+                      delete marcadoresUsuarios[id];
+
+                  }
+
+                }
+
+            });
+
+        }
+
+    );
+
+}
+
+
+
+// =========================
+// BOTÓN COMPARTIR UBICACIÓN
+// =========================
+
+const btnCompartir =
+document.getElementById("btnCompartirUbicacion");
+
+if(btnCompartir){
+
+    btnCompartir.onclick = async()=>{
+
+        compartiendoUbicacion =
+        !compartiendoUbicacion;
+
+
+
+        if(compartiendoUbicacion){
+
+            btnCompartir.innerText =
+            "📍 Compartir: ON";
+
+            btnCompartir.style.background =
+            "#28a745";
+
+            activarSeguimiento(currentUser.uid);
+
+        }else{
+
+            btnCompartir.innerText =
+            "📍 Compartir: OFF";
+
+            btnCompartir.style.background =
+            "#dc3545";
+
+
+            if(watchIdFirebase!==null){
+
+                navigator.geolocation.clearWatch(
+                    watchIdFirebase
+                );
+
+                watchIdFirebase=null;
+
+            }
+
+            await deleteDoc(
+
+                doc(
+                    db,
+                    "usuariosOnline",
+                    currentUser.uid
+                )
+            );
+        }
+    };
+}

@@ -1,0 +1,20 @@
+{
+  "name": "MapaMallas",
+  "short_name": "Mapa",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3388ff",
+  "icons": [
+    {
+      "src": "imagenes/iconoapp.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "imagenes/iconoapp.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

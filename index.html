@@ -11,11 +11,21 @@
 
 <title>Mapa Territorios</title>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3388ff">
-
+<!-- Estilos Leaflet (Cargarlos primero) -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
+
+<!-- Manifest y PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3388ff">
+<link rel="apple-touch-icon" href="imagenes/iconoapp.jpeg">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- Carga de Scripts necesarios para el Mapa y Rotación -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+
+<script src="https://html2canvas.hertzen.com/leaflet/html2canvas.min.js"></script>
 
 <style>
 
@@ -54,6 +64,36 @@ button{
     background:white;
 
     box-shadow:0 0 5px rgba(0,0,0,.3);
+}
+
+/*=========================
+BOTÓN MENÚ
+=========================*/
+
+#menuBoton{
+
+    position:absolute;
+
+    top:10px;
+    right:10px;
+
+    width:48px;
+    height:48px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:white;
+
+    box-shadow:0 0 8px rgba(0,0,0,.3);
+
+    z-index:1001;
+
+    font-size:24px;
+
+    cursor:pointer;
+
 }
 
 #login{
@@ -234,6 +274,13 @@ button{
 
 }
 
+.emoji-clima {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: sans-serif; /* Fuerza el uso de la fuente nativa del sistema */
+}
+
 /*=========================
 PANTALLA INICIAL
 =========================*/
@@ -300,6 +347,81 @@ PANTALLA INICIAL
 
 }
 
+#toggleLocation,
+#toggleClima,
+#verNotas,
+#editarMallas,
+#administrarAdmins,
+#administrarPuntos{
+
+    display:none;
+
+}
+
+/*=========================
+ANIMACIONES BOTONES
+=========================*/
+
+.botonMenu{
+
+    opacity:0;
+
+    transform:translateX(30px);
+
+    transition:
+        opacity .25s ease,
+        transform .25s ease;
+
+}
+
+.botonMenu.visible{
+
+    opacity:1;
+
+    transform:translateX(0);
+
+}
+
+#estadoConexion{
+
+    position:absolute;
+
+    bottom:10px;
+    left:10px;
+
+    z-index:1000;
+
+    background:white;
+
+    padding:8px 12px;
+
+    border-radius:10px;
+
+    box-shadow:0 0 5px rgba(0,0,0,.3);
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+#cambiarMapa{
+
+    border:none;
+
+    background:#3388ff;
+
+    color:white;
+
+    border-radius:8px;
+
+    padding:5px 10px;
+
+    cursor:pointer;
+
+}
 
 </style>
 
@@ -317,6 +439,9 @@ PANTALLA INICIAL
 <div id="pantallaInicio">
 
     <div id="loginBox">
+
+        <!-- LÓGICA DEL LOGO AGREGADA -->
+        <img src="imagenes/iconoapp.jpeg" alt="Logo Mapa Territorios" style="width: 80px; height: 80px; border-radius: 8px; margin-bottom: 10px; object-fit: cover;">
 
         <h1>🗺️ Mapa Territorios</h1>
 
@@ -350,20 +475,34 @@ PANTALLA INICIAL
 BOTONES
 ========================= -->
 
+<button id="menuBoton">☰</button>
+
 <button id="toggleLocation">📍 Mi ubicación</button>
 
 <button id="toggleClima">🌤 Clima</button>
 
-<button id="verNotas">📄 Ver notas</button>
+<button id="verNotas">📄 notas</button>
 
-<button id="editarMallas">🗺️ Editar mallas</button>
+<button id="editarMallas">🗺️ Editar</button>
 
-<button id="administrarAdmins">👥 Administradores</button>
+<button id="administrarAdmins">👥 Admins</button>
 
 <button id="administrarPuntos">📍 Puntos</button>
 
 <div id="estadoConexion">
-🌐 Online
+
+    <span id="textoConexion">
+        🌐 Online
+    </span>
+
+    <button id="cambiarMapa">
+        🛰 Satélite
+    </button>
+
+    <button id="btnCompartirUbicacion" class="botonMenu" style="display:none;">
+    📍 Compartir ubicación: OFF
+    </button>
+
 </div>
 
 
@@ -432,6 +571,8 @@ Agregar administrador
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
 
