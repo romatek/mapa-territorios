@@ -441,17 +441,14 @@ async function mostrarClimaEnMalla(malla){
     }
 
 }
+
 // =========================
-// MAPA CON ROTACIÓN
+// MAPA (ESTÁNDAR SIN ROTACIÓN)
 // =========================
 const map = L.map("map", {
     center: [-38.2, -57.67],
     zoom: 13,
-    // Configuración de rotación requerida por el plugin
-    rotate: true,
-    touchRotate: true,
-    shiftKeyRotate: true,
-    rotateControl: true
+    zoomControl: true
 });
 
 // =========================
@@ -469,12 +466,6 @@ const mapaSatelite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z
 
 // Agregar la capa inicial al mapa
 mapaNormal.addTo(map);
-
-// Inicializar el control de rotación (brújula)
-L.control.rotate({
-    position: "bottomright",
-    closeOnZeroBearing: true
-}).addTo(map);
 
 // Capa para elementos dibujados (mantiene compatibilidad)
 const drawnItems = new L.FeatureGroup();
@@ -1856,7 +1847,7 @@ async function cargarAdmins(){
 
             ${
                 data.rol==="principal"
-                ? "👑 Administrador principal"
+                ? "🛡️ Administrador principal"
                 : "🛡️ Administrador"
             }
 

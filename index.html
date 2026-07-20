@@ -15,16 +15,15 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
 
-<!-- Manifest y PWA -->
+<!-- Manifest y PWA (ICONOS DE PANTALLA DE INICIO CORREGIDOS) -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3388ff">
+<link rel="icon" type="image/jpeg" href="iconoapp.jpeg">
 <link rel="apple-touch-icon" href="iconoapp.jpeg">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-<!-- Carga de Scripts necesarios para el Mapa y Rotación -->
+<!-- Carga de Scripts necesarios para el Mapa y Capturas -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
-
 <script src="https://html2canvas.hertzen.com/leaflet/html2canvas.min.js"></script>
 
 <style>
@@ -278,7 +277,7 @@ BOTÓN MENÚ
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-family: sans-serif; /* Fuerza el uso de la fuente nativa del sistema */
+    font-family: sans-serif;
 }
 
 /*=========================
@@ -440,7 +439,6 @@ ANIMACIONES BOTONES
 
     <div id="loginBox">
 
-        <!-- LÓGICA DEL LOGO AGREGADA -->
         <img src="iconoapp.jpeg" alt="Logo Mapa Territorios" style="width: 80px; height: 80px; border-radius: 8px; margin-bottom: 10px; object-fit: cover;">
 
         <h1>🗺️ Mapa Territorios</h1>
@@ -569,10 +567,6 @@ Agregar administrador
 </button>
 
 </div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
 
