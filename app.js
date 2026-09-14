@@ -1,3 +1,5 @@
+console.log("🔥 APP.JS NUEVO - MAPA MALLAS");
+
 // =========================
 // FIREBASE
 // =========================
@@ -319,35 +321,6 @@ let climaMarkers = [];
 let climaVisible = true;
 
 // =========================
-// BOTÓN CLIMA
-// =========================
-
-document.getElementById("toggleClima").onclick = ()=>{
-
-    climaVisible = !climaVisible;
-
-    climaMarkers.forEach(marker=>{
-
-        if(climaVisible){
-
-            map.addLayer(marker);
-
-        }else{
-
-            map.removeLayer(marker);
-
-        }
-
-    });
-
-    document.getElementById("toggleClima").innerText =
-        climaVisible
-        ? "🌤 Ocultar clima"
-        : "🌤 Mostrar clima";
-
-};
-
-// =========================
 // CENTRO DE LA MALLA
 // =========================
 
@@ -632,6 +605,8 @@ onAuthStateChanged(auth, async(user)=>{
     console.log("=================================");
     console.log("Google:",user.email);
 
+    document.getElementById("pantallaInicio").style.display="none";
+
 
 
     // =========================
@@ -656,8 +631,6 @@ onAuthStateChanged(auth, async(user)=>{
 
     if(esAdmin){
 
-        document.getElementById("pantallaInicio").style.display="none";
-
         document.getElementById("toggleLocation").style.display="block";
         document.getElementById("toggleClima").style.display="block";
         document.getElementById("editarMallas").style.display="block";
@@ -680,8 +653,6 @@ onAuthStateChanged(auth, async(user)=>{
     // =========================
 
     if(usuarioAprobado){
-
-        document.getElementById("pantallaInicio").style.display="none";
 
         document.getElementById("toggleLocation").style.display="block";
         document.getElementById("toggleClima").style.display="block";
@@ -2586,7 +2557,6 @@ async function cargarPuntosAdmin(){
 
 
 
-
         // =========================
         // OPCIONES ADMIN
         // =========================
@@ -2736,7 +2706,6 @@ async function cargarPuntosAdmin(){
 
 
 }
-
 
 
 
