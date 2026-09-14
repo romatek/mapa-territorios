@@ -429,99 +429,124 @@ const drawnItems = new L.FeatureGroup();
 
 map.addLayer(drawnItems);
 
+
+// =========================
+// MENÚ DE BOTONES
+// =========================
+
+const menuBoton = document.getElementById("menuBoton");
+
+const botonesMenu = [
+    "toggleLocation",
+    "toggleClima",
+    "editarMallas",
+    "administrarAdmins",
+    "administrarPuntos",
+    "administrarLetras"
+];
+
+let menuVisible = false;
+
+if(menuBoton){
+
+    menuBoton.onclick = ()=>{
+
+        menuVisible = !menuVisible;
+
+        botonesMenu.forEach(id => {
+
+            const boton = document.getElementById(id);
+
+            if(!boton) return;
+
+            // No mostrar botones que estén deshabilitados
+            if(boton.style.display === "none") return;
+
+            boton.classList.toggle(
+                "visible",
+                menuVisible
+            );
+
+        });
+
+    };
+
+}
+
+
+// =========================
+// LOGIN
+// =========================
+
 document
 .getElementById("login")
 .onclick = async ()=>{
 
 try{
 
+    const provider =
+    new GoogleAuthProvider();
 
-const provider =
-new GoogleAuthProvider();
+    const resultado =
+    await signInWithPopup(
+        auth,
+        provider
+    );
 
+    const user =
+    resultado.user;
 
-const resultado =
-await signInWithPopup(
-auth,
-provider
-);
+    console.log(
+        "Usuario:",
+        user.email
+    );
 
+    const admin =
+    await verificarAdmin(
+        user.email
+    );
 
-const user =
-resultado.user;
+    const aprobado =
+    await verificarUsuario(
+        user.email
+    );
 
+    console.log(
+        "Admin:",
+        admin
+    );
 
-console.log(
-"Usuario:",
-user.email
-);
+    console.log(
+        "Aprobado:",
+        aprobado
+    );
 
+    if(!admin && !aprobado){
 
+        await registrarUsuario(user);
 
-const admin =
-await verificarAdmin(
-user.email
-);
+        await auth.signOut();
 
+        return;
 
-const aprobado =
-await verificarUsuario(
-user.email
-);
+    }
 
-
-
-console.log(
-"Admin:",
-admin
-);
-
-
-console.log(
-"Aprobado:",
-aprobado
-);
-
-
-
-if(!admin && !aprobado){
-
-
-await registrarUsuario(user);
-
-
-await auth.signOut();
-
-
-return;
-
-
-}
-
-
-
-alert(
-"Acceso correcto"
-);
-
-
+    alert(
+        "Acceso correcto"
+    );
 
 }catch(error){
 
+    console.error(
+        "LOGIN ERROR:",
+        error
+    );
 
-console.error(
-"LOGIN ERROR:",
-error
-);
-
-
-alert(
-error.message
-);
-
+    alert(
+        error.message
+    );
 
 }
-
 
 };
 
