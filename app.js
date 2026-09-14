@@ -2908,3 +2908,27 @@ map.on("zoomend",()=>{
     });
 
 });
+
+// =========================
+// ADMINISTRAR LETRAS
+// =========================
+
+const btnLetras = document.getElementById("administrarLetras");
+
+if(btnLetras){
+    btnLetras.onclick = () => {
+        const seccionLetras = document.getElementById("letras-section");
+        if(seccionLetras){
+            seccionLetras.style.display = "block";
+        } else {
+            console.log("Panel de letras no encontrado en el HTML");
+        }
+    };
+}
+
+window.cerrarLetras = () => {
+    const seccionLetras = document.getElementById("letras-section");
+    if(seccionLetras){
+        seccionLetras.style.display = "none";
+    }
+};
