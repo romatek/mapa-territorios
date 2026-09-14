@@ -9,13 +9,13 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Mapa Territorios[cite: 13]</title>
+<title>Mapa Territorios</title>
 
 <!-- Estilos Leaflet (Cargarlos primero) -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
 
-<!-- Manifest y PWA (ICONOS DE PANTALLA DE INICIO CORREGIDOS) -->
+<!-- Manifest y PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3388ff">
 <link rel="icon" type="image/jpeg" href="iconoapp.jpeg">
@@ -48,7 +48,6 @@ button{
 #editarMallas,
 #administrarAdmins,
 #administrarPuntos,
-#administrarLetras,
 #toggleClima{
 
     position:absolute;
@@ -144,14 +143,8 @@ BOTÓN MENÚ
 }
 
 
-#administrarLetras{
-    top:210px;
-    display:none;
-}
-
-
 #toggleClima{
-    top:250px;
+    top:210px;
     display:none;
 }
 
@@ -162,7 +155,7 @@ BOTÓN MENÚ
 
     position:absolute;
 
-    top:290px;
+    top:260px;
     right:10px;
 
     width:300px;
@@ -346,33 +339,19 @@ PANTALLA INICIAL
 
 }
 
-/*=========================
-ANIMACIONES BOTONES (CORREGIDAS Y RESTAURADAS)
-=========================*/
-
 #toggleLocation,
 #toggleClima,
 #editarMallas,
 #administrarAdmins,
-#administrarPuntos,
-#administrarLetras {
-    opacity: 0;
-    transform: translateX(30px);
-    transition: opacity .25s ease, transform .25s ease;
-    pointer-events: none;
-    display: block !important;
+#administrarPuntos{
+
+    display:none;
+
 }
 
-#toggleLocation.visible,
-#toggleClima.visible,
-#editarMallas.visible,
-#administrarAdmins.visible,
-#administrarPuntos.visible,
-#administrarLetras.visible {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-}
+/*=========================
+ANIMACIONES BOTONES
+=========================*/
 
 .botonMenu{
 
@@ -454,7 +433,7 @@ ANIMACIONES BOTONES (CORREGIDAS Y RESTAURADAS)
 
         <img src="iconoapp.jpeg" alt="Logo Mapa Territorios" style="width: 80px; height: 80px; border-radius: 8px; margin-bottom: 10px; object-fit: cover;">
 
-        <h1>🗺️ Mapa Territorios[cite: 13]</h1>
+        <h1>🗺️ Mapa Territorios</h1>
 
         <p>
             Para acceder a todas las funciones
@@ -497,8 +476,6 @@ BOTONES
 <button id="administrarAdmins">👥 Admins</button>
 
 <button id="administrarPuntos">📍 Puntos</button>
-
-<button id="administrarLetras">🔤 Letras</button>
 
 <div id="estadoConexion">
 
