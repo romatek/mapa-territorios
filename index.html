@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Mapa Territorios</title>
+<title>Mapa Territorios[cite: 13]</title>
 
 <!-- Estilos Leaflet (Cargarlos primero) -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
@@ -45,7 +45,6 @@ button{
 
 
 #toggleLocation,
-#verNotas,
 #editarMallas,
 #administrarAdmins,
 #administrarPuntos,
@@ -127,38 +126,32 @@ BOTÓN MENÚ
 }
 
 
-#verNotas{
+#editarMallas{
     top:90px;
     display:none;
 }
 
 
-#editarMallas{
+#administrarAdmins{
     top:130px;
     display:none;
 }
 
 
-#administrarAdmins{
+#administrarPuntos{
     top:170px;
     display:none;
 }
 
 
-#administrarPuntos{
+#administrarLetras{
     top:210px;
     display:none;
 }
 
 
-#administrarLetras{
-    top:250px;
-    display:none;
-}
-
-
 #toggleClima{
-    top:290px;
+    top:250px;
     display:none;
 }
 
@@ -169,7 +162,7 @@ BOTÓN MENÚ
 
     position:absolute;
 
-    top:330px;
+    top:290px;
     right:10px;
 
     width:300px;
@@ -353,21 +346,33 @@ PANTALLA INICIAL
 
 }
 
+/*=========================
+ANIMACIONES BOTONES (CORREGIDAS Y RESTAURADAS)
+=========================*/
+
 #toggleLocation,
 #toggleClima,
-#verNotas,
 #editarMallas,
 #administrarAdmins,
 #administrarPuntos,
-#administrarLetras{
-
-    display:none;
-
+#administrarLetras {
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity .25s ease, transform .25s ease;
+    pointer-events: none;
+    display: block !important;
 }
 
-/*=========================
-ANIMACIONES BOTONES
-=========================*/
+#toggleLocation.visible,
+#toggleClima.visible,
+#editarMallas.visible,
+#administrarAdmins.visible,
+#administrarPuntos.visible,
+#administrarLetras.visible {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
 
 .botonMenu{
 
@@ -449,7 +454,7 @@ ANIMACIONES BOTONES
 
         <img src="iconoapp.jpeg" alt="Logo Mapa Territorios" style="width: 80px; height: 80px; border-radius: 8px; margin-bottom: 10px; object-fit: cover;">
 
-        <h1>🗺️ Mapa Territorios</h1>
+        <h1>🗺️ Mapa Territorios[cite: 13]</h1>
 
         <p>
             Para acceder a todas las funciones
