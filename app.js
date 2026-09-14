@@ -597,10 +597,10 @@ onAuthStateChanged(auth, async(user)=>{
 
     document.getElementById("toggleLocation").style.display="none";
     document.getElementById("toggleClima").style.display="none";
-    document.getElementById("verNotas").style.display="none";
     document.getElementById("editarMallas").style.display="none";
     document.getElementById("administrarAdmins").style.display="none";
     document.getElementById("administrarPuntos").style.display="none";
+    document.getElementById("administrarLetras").style.display="none";
 
 
 
@@ -632,8 +632,6 @@ onAuthStateChanged(auth, async(user)=>{
     console.log("=================================");
     console.log("Google:",user.email);
 
-    document.getElementById("pantallaInicio").style.display="none";
-
 
 
     // =========================
@@ -658,12 +656,14 @@ onAuthStateChanged(auth, async(user)=>{
 
     if(esAdmin){
 
+        document.getElementById("pantallaInicio").style.display="none";
+
         document.getElementById("toggleLocation").style.display="block";
         document.getElementById("toggleClima").style.display="block";
-        document.getElementById("verNotas").style.display="block";
         document.getElementById("editarMallas").style.display="block";
         document.getElementById("administrarAdmins").style.display="block";
         document.getElementById("administrarPuntos").style.display="block";
+        document.getElementById("administrarLetras").style.display="block";
 
         actualizarPosicionBotones();
 
@@ -680,6 +680,8 @@ onAuthStateChanged(auth, async(user)=>{
     // =========================
 
     if(usuarioAprobado){
+
+        document.getElementById("pantallaInicio").style.display="none";
 
         document.getElementById("toggleLocation").style.display="block";
         document.getElementById("toggleClima").style.display="block";
@@ -715,10 +717,10 @@ function actualizarPosicionBotones(){
     const botones = [
 
         "toggleLocation",
-        "verNotas",
         "editarMallas",
         "administrarAdmins",
         "administrarPuntos",
+        "administrarLetras",
         "toggleClima"
 
     ];
@@ -1460,148 +1462,6 @@ async function(id){
     alert("Error: no se pudo guardar la nota");
 
   }
-
-};
-
-// =========================
-// VER NOTAS
-// =========================
-
-document
-.getElementById("verNotas")
-.onclick = async ()=>{
-
-  const pass =
-  prompt("Contraseña:");
-
-  if(
-    pass === ADMIN_PASSWORD &&
-    esAdmin
-  ){
-
-    document
-    .getElementById(
-      "notas-section"
-    )
-    .style.display = "block";
-
-    cargarNotas();
-
-  }else{
-
-    alert("Acceso denegado");
-
-  }
-
-};
-
-async function cargarNotas(){
-
-  try{
-
-    const snapshot =
-    await getDocs(
-      collection(db,"notas")
-    );
-
-    const notas = [];
-
-    snapshot.forEach(docSnap => {
-
-      notas.push({
-
-        id: docSnap.id,
-
-        ...docSnap.data()
-
-      });
-
-    });
-
-    notas.sort(
-      (a,b)=>b.timestamp-a.timestamp
-    );
-
-    const lista =
-    document.getElementById(
-      "lista-notas"
-    );
-
-    lista.innerHTML = "";
-
-    notas.forEach(d => {
-
-      lista.innerHTML += `
-
-        <div style="
-          border-bottom:1px solid #ccc;
-          margin-bottom:10px;
-          padding-bottom:10px;
-        ">
-
-          <p>
-            <strong>Nota:</strong>
-            ${d.nota}
-          </p>
-
-          <p>
-            <strong>Fecha:</strong>
-            ${d.fecha || "Sin fecha"}
-          </p>
-
-          <p>
-            ${
-              d.completado
-              ? "✅ Completado"
-              : "❌ Pendiente"
-            }
-          </p>
-
-          <button
-            onclick="borrarNota('${d.id}')"
-          >
-            Borrar
-          </button>
-
-        </div>
-
-      `;
-
-    });
-
-  }catch(err){
-
-    console.error("Error cargando notas:", err);
-
-    alert("Error: no se pudieron cargar las notas");
-
-  }
-
-}
-
-window.borrarNota =
-async function(id){
-
-  if(!esAdmin){
-    alert("Solo administradores pueden eliminar notas");
-    return;
-  }
-
-  await deleteDoc(
-    doc(db,"notas",id)
-  );
-
-  cargarNotas();
-
-};
-
-window.cerrarNotas = ()=>{
-
-  document
-  .getElementById(
-    "notas-section"
-  )
-  .style.display = "none";
 
 };
 
@@ -2726,6 +2586,7 @@ async function cargarPuntosAdmin(){
 
 
 
+
         // =========================
         // OPCIONES ADMIN
         // =========================
@@ -2875,6 +2736,7 @@ async function cargarPuntosAdmin(){
 
 
 }
+
 
 
 
