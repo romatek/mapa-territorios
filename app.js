@@ -514,7 +514,7 @@ aprobado
 if(!admin && !aprobado){
 
 
-await registrarSolicitud(user);
+await registrarUsuario(user);
 
 
 await auth.signOut();
@@ -2726,7 +2726,6 @@ async function cargarPuntosAdmin(){
 
 
 
-
         // =========================
         // OPCIONES ADMIN
         // =========================
@@ -2876,7 +2875,6 @@ async function cargarPuntosAdmin(){
 
 
 }
-
 
 
 
