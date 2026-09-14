@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
 
-<!-- Manifest y PWA -->
+<!-- Manifest y PWA (ICONOS DE PANTALLA DE INICIO CORREGIDOS) -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3388ff">
 <link rel="icon" type="image/jpeg" href="iconoapp.jpeg">
@@ -48,6 +48,7 @@ button{
 #editarMallas,
 #administrarAdmins,
 #administrarPuntos,
+#administrarLetras,
 #toggleClima{
 
     position:absolute;
@@ -143,8 +144,14 @@ BOTÓN MENÚ
 }
 
 
-#toggleClima{
+#administrarLetras{
     top:210px;
+    display:none;
+}
+
+
+#toggleClima{
+    top:250px;
     display:none;
 }
 
@@ -155,7 +162,7 @@ BOTÓN MENÚ
 
     position:absolute;
 
-    top:260px;
+    top:290px;
     right:10px;
 
     width:300px;
@@ -339,19 +346,34 @@ PANTALLA INICIAL
 
 }
 
+/*=========================
+ANIMACIONES BOTONES (CORREGIDAS Y RESTAURADAS)
+=========================*/
+
 #toggleLocation,
 #toggleClima,
 #editarMallas,
 #administrarAdmins,
-#administrarPuntos{
-
-    display:none;
-
+#administrarPuntos,
+#administrarLetras {
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity .25s ease, transform .25s ease;
+    pointer-events: none;
+    display: none;
 }
 
-/*=========================
-ANIMACIONES BOTONES
-=========================*/
+#toggleLocation.visible,
+#toggleClima.visible,
+#editarMallas.visible,
+#administrarAdmins.visible,
+#administrarPuntos.visible,
+#administrarLetras.visible {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    display: block;
+}
 
 .botonMenu{
 
@@ -476,6 +498,8 @@ BOTONES
 <button id="administrarAdmins">👥 Admins</button>
 
 <button id="administrarPuntos">📍 Puntos</button>
+
+<button id="administrarLetras">🔤 Letras</button>
 
 <div id="estadoConexion">
 
