@@ -1,46 +1,37 @@
-console.log("🔥 APP.JS NUEVO - MAPA MALLAS");
-
 // =========================
 // FIREBASE
 // =========================
 
 import {
-    initializeApp
+  initializeApp
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 
 import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup,
-    onAuthStateChanged
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 
 import {
-    getFirestore,
-    collection,
-    addDoc,
-    getDocs,
-    doc,
-    deleteDoc,
-    updateDoc,
-    query,
-    where
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  deleteDoc,
+  updateDoc,
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 const firebaseConfig = {
-
-    apiKey: "AIzaSyBAoY4Qt3_E0iWIS2z-CxAbW7xoKx9GgHM",
-
-    authDomain: "mapamallas.firebaseapp.com",
-
-    projectId: "mapamallas",
-
-    storageBucket: "mapamallas.appspot.com",
-
-    messagingSenderId: "771420817036",
-
-    appId: "1:771420817036:web:38712f77f74d30f3d7dda9"
-
+  apiKey: "AIzaSyBAoY4Qt3_E0iWIS2z-CxAbW7xoKx9GgHM",
+  authDomain: "mapamallas.firebaseapp.com",
+  projectId: "mapamallas",
+  storageBucket: "mapamallas.appspot.com",
+  messagingSenderId: "771420817036",
+  appId: "1:771420817036:web:38712f77f74d30f3d7dda9"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -49,19 +40,16 @@ const auth = getAuth(app);
 
 const db = getFirestore(app);
 
-
 // =========================
 // ADMIN
 // =========================
 
 let esAdmin = false;
-
 let esAdminPrincipal = false;
 
 const ADMIN_PASSWORD = "123admin";
 
 let currentUser = null;
-
 
 // =========================
 // USUARIOS
@@ -75,7 +63,6 @@ let esInvitado = false;
 
 let nombreUsuario = "";
 
-
 // =========================
 // PUNTOS ADMIN
 // =========================
@@ -86,15 +73,13 @@ let puntosAdmin = [];
 
 let marcadoresPuntos = [];
 
-
 // =========================
 // VERIFICAR ADMIN
 // =========================
 
 async function verificarAdmin(email){
 
-    const snapshot =
-    await getDocs(
+    const snapshot = await getDocs(
         collection(db,"usuarios")
     );
 
@@ -104,30 +89,18 @@ async function verificarAdmin(email){
 
         const data = docSnap.data();
 
-        console.log(
-            "Firestore:",
-            data.email,
-            data.rol
-        );
+        console.log("Firestore:", data.email, data.rol);
 
         if(
-
-            data.email?.toLowerCase()
-            ===
-            email.toLowerCase()
-
+            data.email?.toLowerCase() === email.toLowerCase()
             &&
-
             (
                 data.rol === "admin"
                 ||
                 data.rol === "principal"
             )
-
         ){
-
             admin = true;
-
         }
 
     });
@@ -143,8 +116,7 @@ async function verificarAdmin(email){
 
 async function verificarAdminPrincipal(email){
 
-    const snapshot =
-    await getDocs(
+    const snapshot = await getDocs(
         collection(db,"usuarios")
     );
 
@@ -155,19 +127,11 @@ async function verificarAdminPrincipal(email){
         const data = docSnap.data();
 
         if(
-
-            data.email?.toLowerCase()
-            ===
-            email.toLowerCase()
-
+            data.email?.toLowerCase() === email.toLowerCase()
             &&
-
             data.rol === "principal"
-
         ){
-
             principal = true;
-
         }
 
     });
@@ -184,28 +148,22 @@ async function verificarAdminPrincipal(email){
 async function verificarUsuario(email){
 
     const q = query(
-
         collection(db,"usuarios"),
-
         where("email","==",email)
-
     );
 
-    const resultado =
-    await getDocs(q);
+    const resultado = await getDocs(q);
 
     if(resultado.empty){
-
         return false;
-
     }
 
-    const data =
-    resultado.docs[0].data();
+    const data = resultado.docs[0].data();
 
     return data.aprobado === true;
 
 }
+
 
 
 // =========================
@@ -215,27 +173,21 @@ async function verificarUsuario(email){
 async function registrarUsuario(user){
 
     const q = query(
-
         collection(db,"usuarios"),
-
         where("email","==",user.email)
-
     );
 
-    const resultado =
-    await getDocs(q);
+    const resultado = await getDocs(q);
 
+    // Ya existe
 
     if(!resultado.empty){
 
-        const datos =
-        resultado.docs[0].data();
+        const datos = resultado.docs[0].data();
 
         if(datos.aprobado){
 
-            alert(
-                "✅ Tu cuenta ya fue aprobada."
-            );
+            alert("✅ Tu cuenta ya fue aprobada.");
 
             return true;
 
@@ -252,128 +204,109 @@ Esperá que un administrador la apruebe.`
     }
 
 
-    const nombre =
-    prompt("Nombre:");
+
+    const nombre = prompt("Nombre:");
 
     if(!nombre){
 
-        alert(
-            "Solicitud cancelada."
-        );
+        alert("Solicitud cancelada.");
 
         return false;
 
     }
 
 
-    const apellido =
-    prompt("Apellido:");
+
+    const apellido = prompt("Apellido:");
 
     if(!apellido){
 
-        alert(
-            "Solicitud cancelada."
-        );
+        alert("Solicitud cancelada.");
 
         return false;
 
     }
+
 
 
     await addDoc(
 
-        collection(
-            db,
-            "usuarios"
-        ),
+        collection(db,"usuarios"),
 
         {
 
-            nombre:
-                nombre.trim(),
+            nombre: nombre.trim(),
 
-            apellido:
-                apellido.trim(),
+            apellido: apellido.trim(),
 
             nombreCompleto:
-                nombre.trim()
-                +
-                " "
-                +
-                apellido.trim(),
+                nombre.trim()+" "+apellido.trim(),
 
-            email:
-                user.email,
+            email:user.email,
 
-            aprobado:
-                false,
+            aprobado:false,
 
-            rol:
-                "usuario",
+            rol:"usuario",
 
-            fecha:
-                Date.now()
+            fecha:Date.now()
 
         }
 
     );
 
 
+
     alert(
+
 `✅ Solicitud enviada correctamente.
 
 Cuando un administrador apruebe tu acceso,
 solo tendrás que volver a iniciar sesión.`
+
     );
 
     return false;
 
 }
 
-
 // =========================
-// ESTADO CONEXIÓN
+// ESTADO CONEXION
 // =========================
 
 function actualizarEstadoConexion(){
 
-    const texto =
-    document.getElementById(
-        "textoConexion"
-    );
+  const estado =
+  document.getElementById(
+    "estadoConexion"
+  );
 
-    if(!texto){
+  if(navigator.onLine){
 
-        return;
+    estado.innerHTML =
+    "🌐 Online";
 
-    }
+  }else{
 
-    if(navigator.onLine){
+    estado.innerHTML =
+    "📡 Offline";
 
-        texto.innerText =
-            "🌐 Online";
-
-    }else{
-
-        texto.innerText =
-            "📡 Offline";
-
-    }
+  }
 
 }
 
 window.addEventListener(
-    "online",
-    actualizarEstadoConexion
+  "online",
+  ()=>{
+    actualizarEstadoConexion();
+  }
 );
 
 window.addEventListener(
-    "offline",
-    actualizarEstadoConexion
+  "offline",
+  actualizarEstadoConexion
 );
 
 actualizarEstadoConexion();
-
 
 // =========================
 // CLIMA
@@ -383,9 +316,36 @@ const weatherApiKey =
 "c3f0c0d3847e95f9992bf0ba7ae2f19c";
 
 let climaMarkers = [];
-
 let climaVisible = true;
 
+// =========================
+// BOTÓN CLIMA
+// =========================
+
+document.getElementById("toggleClima").onclick = ()=>{
+
+    climaVisible = !climaVisible;
+
+    climaMarkers.forEach(marker=>{
+
+        if(climaVisible){
+
+            map.addLayer(marker);
+
+        }else{
+
+            map.removeLayer(marker);
+
+        }
+
+    });
+
+    document.getElementById("toggleClima").innerText =
+        climaVisible
+        ? "🌤 Ocultar clima"
+        : "🌤 Mostrar clima";
+
+};
 
 // =========================
 // CENTRO DE LA MALLA
@@ -394,27 +354,21 @@ let climaVisible = true;
 function getCentroide(coords){
 
     let lat = 0;
-
     let lng = 0;
 
     coords.forEach(c=>{
 
         lat += c.lat;
-
         lng += c.lng;
 
     });
 
-    return [
-
+    return[
         lat / coords.length,
-
         lng / coords.length
-
     ];
 
 }
-
 
 // =========================
 // MOSTRAR CLIMA
@@ -422,126 +376,56 @@ function getCentroide(coords){
 
 async function mostrarClimaEnMalla(malla){
 
-    if(!navigator.onLine){
-
-        return;
-
-    }
+    if(!navigator.onLine) return;
 
     try{
 
-        const coords =
-        malla.getLatLngs()[0];
+        const coords = malla.getLatLngs()[0];
 
-        const centro =
-        getCentroide(coords);
+        const centro = getCentroide(coords);
 
-        const lat =
-        centro[0];
-
-        const lon =
-        centro[1];
+        const lat = centro[0];
+        const lon = centro[1];
 
         const url =
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${weatherApiKey}&units=metric&lang=es`;
 
-        const resp =
-        await fetch(url);
+        const resp = await fetch(url);
 
-        if(!resp.ok){
+        const data = await resp.json();
 
-            console.error(
-                "❌ Error OpenWeather:",
-                resp.status
-            );
-
-            return;
-
-        }
-
-        const data =
-        await resp.json();
-
-        if(!data.weather){
-
-            console.log(
-                "⚠️ OpenWeather no devolvió weather:",
-                data
-            );
-
-            return;
-
-        }
-
-
-        // DEBUG DEL ICONO
-
-        console.log(
-            "🌤️ Clima:",
-            data.weather[0].icon,
-            data.weather[0].description
-        );
-
+        if(!data.weather) return;
 
         const iconUrl =
         `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
 
+        const iconoClima = L.icon({
 
-        const iconoClima =
-        L.icon({
+            iconUrl:iconUrl,
 
-            iconUrl:
-                iconUrl,
-
-            iconSize:
-                [50,50],
-
-            iconAnchor:
-                [25,25],
-
-            popupAnchor:
-                [0,-25]
+            iconSize:[50,50]
 
         });
 
+        const marker = L.marker(
 
-        const marker =
-        L.marker(
-
-            [
-                lat,
-                lon
-            ],
+            [lat,lon],
 
             {
-
-                icon:
-                    iconoClima
-
+                icon:iconoClima
             }
 
         );
 
-
         marker.bindPopup(`
 
-            <b>🌤️ Clima</b>
-
-            <br><br>
-
             🌡 ${data.main.temp}°C
-
             <br>
-
             ${data.weather[0].description}
 
         `);
 
-
-        climaMarkers.push(
-            marker
-        );
-
+        climaMarkers.push(marker);
 
         if(climaVisible){
 
@@ -551,554 +435,274 @@ async function mostrarClimaEnMalla(malla){
 
     }catch(err){
 
-        console.error(
-            "Error clima:",
-            err
-        );
+        console.error("Error clima:",err);
 
     }
 
 }
-
 
 // =========================
 // MAPA
 // =========================
 
-const map =
-L.map("map")
-.setView(
-    [-38.2,-57.67],
-    13
-);
+const map = L.map("map")
+.setView([-38.2, -57.67], 13);
 
-
-const mapaCalles =
 L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-);
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+).addTo(map);
 
+const drawnItems = new L.FeatureGroup();
 
-const mapaSatelite =
-L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-);
-
-
-mapaCalles.addTo(map);
-
-
-// =========================
-// CAMBIAR MAPA
-// =========================
-
-let usandoSatelite = false;
-
-const botonCambiarMapa =
-document.getElementById(
-    "cambiarMapa"
-);
-
-if(botonCambiarMapa){
-
-    botonCambiarMapa.onclick = ()=>{
-
-        if(usandoSatelite){
-
-            map.removeLayer(
-                mapaSatelite
-            );
-
-            mapaCalles.addTo(
-                map
-            );
-
-            usandoSatelite = false;
-
-            botonCambiarMapa.innerText =
-                "🛰 Satélite";
-
-        }else{
-
-            map.removeLayer(
-                mapaCalles
-            );
-
-            mapaSatelite.addTo(
-                map
-            );
-
-            usandoSatelite = true;
-
-            botonCambiarMapa.innerText =
-                "🗺️ Mapa";
-
-        }
-
-    };
-
-}
-
-
-// =========================
-// ELEMENTOS DIBUJADOS
-// =========================
-
-const drawnItems =
-new L.FeatureGroup();
-
-map.addLayer(
-    drawnItems
-);
-
-
-// =========================
-// MENÚ
-// =========================
-
-const menuBoton =
-document.getElementById(
-    "menuBoton"
-);
-
-
-const botonesMenu = [
-
-    "toggleLocation",
-
-    "toggleClima",
-
-    "editarMallas",
-
-    "administrarAdmins",
-
-    "administrarPuntos",
-
-    "administrarLetras"
-
-];
-
-
-let menuVisible = false;
-
-
-function actualizarMenu(){
-
-    botonesMenu.forEach(id=>{
-
-        const boton =
-        document.getElementById(id);
-
-        if(!boton){
-
-            return;
-
-        }
-
-
-        if(
-
-            boton.style.display !==
-            "none"
-
-        ){
-
-            if(menuVisible){
-
-                boton.classList.add(
-                    "visible"
-                );
-
-            }else{
-
-                boton.classList.remove(
-                    "visible"
-                );
-
-            }
-
-        }else{
-
-            boton.classList.remove(
-                "visible"
-            );
-
-        }
-
-    });
-
-}
-
-
-if(menuBoton){
-
-    menuBoton.onclick = ()=>{
-
-        menuVisible =
-            !menuVisible;
-
-        actualizarMenu();
-
-        console.log(
-            "☰ Menú:",
-            menuVisible
-            ? "ABIERTO"
-            : "CERRADO"
-        );
-
-    };
-
-}
-
-
-// =========================
-// LOGIN
-// =========================
+map.addLayer(drawnItems);
 
 document
 .getElementById("login")
 .onclick = async ()=>{
 
-    try{
-
-        const provider =
-        new GoogleAuthProvider();
+try{
 
 
-        const resultado =
-        await signInWithPopup(
-            auth,
-            provider
-        );
+const provider =
+new GoogleAuthProvider();
 
 
-        const user =
-        resultado.user;
+const resultado =
+await signInWithPopup(
+auth,
+provider
+);
 
 
-        console.log(
-            "Usuario:",
-            user.email
-        );
+const user =
+resultado.user;
 
 
-        const admin =
-        await verificarAdmin(
-            user.email
-        );
+console.log(
+"Usuario:",
+user.email
+);
 
 
-        const aprobado =
-        await verificarUsuario(
-            user.email
-        );
+
+const admin =
+await verificarAdmin(
+user.email
+);
 
 
-        console.log(
-            "Admin:",
-            admin
-        );
-
-        console.log(
-            "Aprobado:",
-            aprobado
-        );
+const aprobado =
+await verificarUsuario(
+user.email
+);
 
 
-        if(
-            !admin &&
-            !aprobado
-        ){
 
-            await registrarUsuario(
-                user
-            );
-
-            await auth.signOut();
-
-            return;
-
-        }
+console.log(
+"Admin:",
+admin
+);
 
 
-        alert(
-            "Acceso correcto"
-        );
+console.log(
+"Aprobado:",
+aprobado
+);
 
 
-    }catch(error){
 
-        console.error(
-            "LOGIN ERROR:",
-            error
-        );
+if(!admin && !aprobado){
 
-        alert(
-            error.message
-        );
 
-    }
+await registrarSolicitud(user);
+
+
+await auth.signOut();
+
+
+return;
+
+
+}
+
+
+
+alert(
+"Acceso correcto"
+);
+
+
+
+}catch(error){
+
+
+console.error(
+"LOGIN ERROR:",
+error
+);
+
+
+alert(
+error.message
+);
+
+
+}
+
 
 };
-
 
 // =========================
 // CONTINUAR COMO INVITADO
 // =========================
 
 document
-.getElementById(
-    "continuarInvitado"
-)
-.onclick = async ()=>{
+.getElementById("continuarInvitado")
+.onclick = async()=>{
 
     esInvitado = true;
 
-
     document
-    .getElementById(
-        "pantallaInicio"
-    )
-    .style.display =
-        "none";
+    .getElementById("pantallaInicio")
+    .style.display="none";
 
-
-    document
-    .getElementById(
-        "toggleLocation"
-    )
-    .style.display =
-        "block";
-
-
-    document
-    .getElementById(
-        "toggleClima"
-    )
-    .style.display =
-        "block";
-
+    // Mostrar funciones permitidas
+    document.getElementById("toggleLocation").style.display="block";
+    document.getElementById("toggleClima").style.display="block";
 
     actualizarPosicionBotones();
 
-
-    console.log(
-        "👁️ Usuario invitado"
-    );
-
+    console.log("👁️ Usuario invitado");
 
     await recargarMapa();
 
 };
 
-
 // =========================
 // AUTH
 // =========================
 
-onAuthStateChanged(
-    auth,
-    async(user)=>{
+onAuthStateChanged(auth, async(user)=>{
 
-        currentUser =
-            user || null;
+    currentUser = user || null;
 
+    esAdmin = false;
+    esAdminPrincipal = false;
+    usuarioAprobado = false;
+    esInvitado = false;
 
-        esAdmin =
-            false;
+    // =========================
+    // OCULTAR BOTONES
+    // =========================
 
-        esAdminPrincipal =
-            false;
+    document.getElementById("toggleLocation").style.display="none";
+    document.getElementById("toggleClima").style.display="none";
+    document.getElementById("verNotas").style.display="none";
+    document.getElementById("editarMallas").style.display="none";
+    document.getElementById("administrarAdmins").style.display="none";
+    document.getElementById("administrarPuntos").style.display="none";
 
-        usuarioAprobado =
-            false;
 
-        esInvitado =
-            false;
 
+    // =========================
+    // NO HAY SESIÓN
+    // =========================
 
-        // =========================
-        // OCULTAR BOTONES
-        // =========================
+    if(!user){
 
-        botonesMenu.forEach(id=>{
+        console.log("Sin usuario logueado");
 
-            const btn =
-            document.getElementById(id);
+        esInvitado = false;
 
-            if(btn){
+        // Siempre volver a mostrar la pantalla inicial
+        document.getElementById("pantallaInicio").style.display="flex";
 
-                btn.style.display =
-                    "none";
+        await recargarMapa();
 
-                btn.classList.remove(
-                    "visible"
-                );
-
-            }
-
-        });
-
-
-        menuVisible = false;
-
-
-        // =========================
-        // SIN SESIÓN
-        // =========================
-
-        if(!user){
-
-            console.log(
-                "Sin usuario logueado"
-            );
-
-
-            esInvitado =
-                false;
-
-
-            document
-            .getElementById(
-                "pantallaInicio"
-            )
-            .style.display =
-                "flex";
-
-
-            await recargarMapa();
-
-
-            return;
-
-        }
-
-
-        // =========================
-        // USUARIO
-        // =========================
-
-        console.log(
-            "================================="
-        );
-
-        console.log(
-            "Google:",
-            user.email
-        );
-
-
-        document
-        .getElementById(
-            "pantallaInicio"
-        )
-        .style.display =
-            "none";
-
-
-        // =========================
-        // PERMISOS
-        // =========================
-
-        esAdmin =
-        await verificarAdmin(
-            user.email
-        );
-
-
-        esAdminPrincipal =
-        await verificarAdminPrincipal(
-            user.email
-        );
-
-
-        usuarioAprobado =
-        await verificarUsuario(
-            user.email
-        );
-
-
-        console.log(
-            "ADMIN:",
-            esAdmin
-        );
-
-        console.log(
-            "PRINCIPAL:",
-            esAdminPrincipal
-        );
-
-        console.log(
-            "APROBADO:",
-            usuarioAprobado
-        );
-
-
-        // =========================
-        // ADMIN
-        // =========================
-        if(esAdmin){
-
-            document.getElementById("toggleLocation").style.display = "block";
-            document.getElementById("toggleClima").style.display = "block";
-            document.getElementById("editarMallas").style.display = "block";
-            document.getElementById("administrarAdmins").style.display = "block";
-            document.getElementById("administrarPuntos").style.display = "block";
-            document.getElementById("administrarLetras").style.display = "block";
-
-            actualizarPosicionBotones();
-            await recargarMapa();
-            return;
-        }
-
-
-        // =========================
-        // USUARIO APROBADO
-        // =========================
-
-        if(usuarioAprobado){
-
-            document
-            .getElementById(
-                "toggleLocation"
-            )
-            .style.display =
-                "block";
-
-
-            document
-            .getElementById(
-                "toggleClima"
-            )
-            .style.display =
-                "block";
-
-
-            actualizarPosicionBotones();
-
-
-            await recargarMapa();
-
-
-            return;
-
-        }
-
-
-        // =========================
-        // USUARIO NUEVO
-        // =========================
-
-        await registrarUsuario(
-            user
-        );
-
-
-        await auth.signOut();
+        return;
 
     }
-);
 
+
+
+    // =========================
+    // HAY USUARIO
+    // =========================
+
+    console.log("=================================");
+    console.log("Google:",user.email);
+
+    document.getElementById("pantallaInicio").style.display="none";
+
+
+
+    // =========================
+    // VERIFICAR PERMISOS
+    // =========================
+
+    esAdmin = await verificarAdmin(user.email);
+
+    esAdminPrincipal = await verificarAdminPrincipal(user.email);
+
+    usuarioAprobado = await verificarUsuario(user.email);
+
+    console.log("ADMIN:",esAdmin);
+    console.log("PRINCIPAL:",esAdminPrincipal);
+    console.log("APROBADO:",usuarioAprobado);
+
+
+
+    // =========================
+    // ADMIN
+    // =========================
+
+    if(esAdmin){
+
+        document.getElementById("toggleLocation").style.display="block";
+        document.getElementById("toggleClima").style.display="block";
+        document.getElementById("verNotas").style.display="block";
+        document.getElementById("editarMallas").style.display="block";
+        document.getElementById("administrarAdmins").style.display="block";
+        document.getElementById("administrarPuntos").style.display="block";
+
+        actualizarPosicionBotones();
+
+        await recargarMapa();
+
+        return;
+
+    }
+
+
+
+    // =========================
+    // USUARIO APROBADO
+    // =========================
+
+    if(usuarioAprobado){
+
+        document.getElementById("toggleLocation").style.display="block";
+        document.getElementById("toggleClima").style.display="block";
+
+        actualizarPosicionBotones();
+
+        await recargarMapa();
+
+        return;
+
+    }
+
+
+
+    // =========================
+    // USUARIO NUEVO
+    // =========================
+
+    await registrarUsuario(user);
+
+    await auth.signOut();
+
+});
 
 // =========================
 // ORDENAR BOTONES
@@ -1106,42 +710,26 @@ onAuthStateChanged(
 
 function actualizarPosicionBotones(){
 
-    let top = 60;
-
+    let top = 10;
 
     const botones = [
 
         "toggleLocation",
-
+        "verNotas",
         "editarMallas",
-
         "administrarAdmins",
-
         "administrarPuntos",
-
-        "administrarLetras",
-
         "toggleClima"
 
     ];
 
-
     botones.forEach(id=>{
 
-        const btn =
-        document.getElementById(id);
+        const btn = document.getElementById(id);
 
+        if(btn.style.display !== "none"){
 
-        if(
-
-            btn &&
-            btn.style.display !==
-            "none"
-
-        ){
-
-            btn.style.top =
-                top + "px";
+            btn.style.top = top + "px";
 
             top += 40;
 
@@ -1149,11 +737,7 @@ function actualizarPosicionBotones(){
 
     });
 
-
-    actualizarMenu();
-
 }
-
 
 // =========================
 // DIBUJO
@@ -1161,337 +745,218 @@ function actualizarPosicionBotones(){
 
 let drawControl = null;
 
-
 function activarDibujo(){
 
-    if(drawControl){
+  if(drawControl) return;
 
-        return;
+  drawControl =
+  new L.Control.Draw({
 
-    }
+    draw:{
 
+      polygon:true,
+      rectangle:true,
 
-    drawControl =
-    new L.Control.Draw({
+      circle:false,
+      marker:false,
+      polyline:false
 
-        draw:{
+    },
 
-            polygon:true,
+    edit:false
 
-            rectangle:true,
+  });
 
-            circle:false,
+  map.addControl(drawControl);
 
-            marker:false,
+  map.off(L.Draw.Event.CREATED);
 
-            polyline:false
+  map.on(
 
-        },
+    L.Draw.Event.CREATED,
 
-        edit:false
+    async function(e){
 
-    });
+      try{
 
+        const layer = e.layer;
 
-    map.addControl(
-        drawControl
-    );
+        const coords =
+        layer.getLatLngs()[0]
+        .map(p => ({
+          lat:p.lat,
+          lng:p.lng
+        }));
 
+        const nombre =
+        prompt("Nombre territorio:");
 
-    map.off(
-        L.Draw.Event.CREATED
-    );
+        if(!nombre) return;
 
+        const color =
+        prompt("Color HEX:",
+        "#3388ff");
 
-    map.on(
+        const nuevoTerritorio = {
 
-        L.Draw.Event.CREATED,
+          adminEmail: currentUser.email,
 
-        async function(e){
+          nombre,
 
-            try{
+          color,
 
-                const layer =
-                e.layer;
+          coords
 
+        };
 
-                const coords =
-                layer
-                .getLatLngs()[0]
-                .map(p=>({
+        if(!navigator.onLine){
 
-                    lat:p.lat,
+          guardarOperacionPendiente(
+            "crear",
+            nuevoTerritorio
+          );
 
-                    lng:p.lng
+          alert("Sin conexión. Se sincronizará cuando haya internet.");
 
-                }));
-
-
-                const nombre =
-                prompt(
-                    "Nombre territorio:"
-                );
-
-
-                if(!nombre){
-
-                    return;
-
-                }
-
-
-                const color =
-                prompt(
-                    "Color HEX:",
-                    "#3388ff"
-                );
-
-
-                const nuevoTerritorio = {
-
-                    adminEmail:
-                        currentUser.email,
-
-                    nombre:
-                        nombre.trim(),
-
-                    color:
-                        color ||
-                        "#3388ff",
-
-                    coords
-
-                };
-
-
-                if(!navigator.onLine){
-
-                    guardarOperacionPendiente(
-
-                        "crear",
-
-                        nuevoTerritorio
-
-                    );
-
-
-                    alert(
-                        "Sin conexión. Se sincronizará cuando haya internet."
-                    );
-
-
-                    return;
-
-                }
-
-
-                await addDoc(
-
-                    collection(
-                        db,
-                        "territorios"
-                    ),
-
-                    nuevoTerritorio
-
-                );
-
-
-                await recargarMapa();
-
-
-                cargarMallas();
-
-
-            }catch(err){
-
-                console.error(
-                    "Error creando territorio:",
-                    err
-                );
-
-
-                alert(
-                    "Error: no se pudo crear el territorio"
-                );
-
-            }
+          return;
 
         }
 
-    );
+        await addDoc(
+
+          collection(
+            db,
+            "territorios"
+          ),
+
+          nuevoTerritorio
+
+        );
+
+        await recargarMapa();
+
+        cargarMallas();
+
+      }catch(err){
+
+        console.error("Error creando territorio:", err);
+
+        alert("Error: no se pudo crear el territorio");
+
+      }
+
+    }
+
+  );
 
 }
-
 
 // =========================
 // CREAR TERRITORIO VISUAL
 // =========================
 
-function crearTerritorioVisual(
-    data,
-    id
-){
+function crearTerritorioVisual(data,id){
 
-    const polygon =
-    L.polygon(
+    const polygon = L.polygon(
 
         data.coords,
 
         {
-
-            color:
-                data.color,
-
-            fillOpacity:
-                0.4
-
+            color:data.color,
+            fillOpacity:0.4
         }
 
     ).addTo(map);
 
 
     // =========================
-    // NOMBRE
+    // NOMBRE DEL TERRITORIO
     // =========================
 
-    polygon.bindTooltip(
+    polygon.bindTooltip(data.nombre,{
 
-        data.nombre,
+        permanent:true,
+        direction:"center",
+        className:"nombreTerritorio",
+        opacity:1
 
-        {
-
-            permanent:true,
-
-            direction:"center",
-
-            className:
-                "nombreTerritorio",
-
-            opacity:1
-
-        }
-
-    );
-
+    });
 
     polygon.openTooltip();
 
 
+
     // =========================
-    // PUNTO ADMIN
+    // AGREGAR PUNTOS ADMIN SOBRE MALLAS
     // =========================
 
-    polygon.on(
-        "click",
-        async function(e){
-
-            if(!esAdmin){
-
-                return;
-
-            }
-
-            if(!modoAgregarPunto){
-
-                return;
-
-            }
+    polygon.on("click", async function(e){
 
 
-            L.DomEvent.stopPropagation(e);
+        if(!esAdmin) return;
+
+        if(!modoAgregarPunto) return;
 
 
-            const nombre =
-            prompt(
-                "Nombre del punto:"
-            );
+        L.DomEvent.stopPropagation(e);
 
 
-            if(!nombre){
+        const nombre = prompt("Nombre del punto:");
 
-                modoAgregarPunto =
-                    false;
+        if(!nombre){
 
+            modoAgregarPunto = false;
 
-                document
-                .getElementById(
-                    "administrarPuntos"
-                )
-                .innerText =
-                    "📍 Puntos";
+            document.getElementById("administrarPuntos").innerText =
+            "📍 Puntos";
 
+            return;
 
-                return;
-
-            }
+        }
 
 
-            const icono =
-            prompt(
+        const icono = prompt(
 `Elegí un icono:
 
 🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
 
 Escribí uno de ellos.`,
-                "📍"
-            );
+"📍");
 
 
-            await addDoc(
 
-                collection(
-                    db,
-                    "puntosAdmin"
-                ),
-
-                {
-
-                    nombre:
-                        nombre.trim(),
-
-                    lat:
-                        e.latlng.lat,
-
-                    lng:
-                        e.latlng.lng,
-
-                    color:
-                        "#3388ff",
-
-                    publico:
-                        false,
-
-                    icono:
-                        icono || "📍",
-
-                    creadoPor:
-                        currentUser?.email || "",
-
-                    fecha:
-                        Date.now()
-
-                }
-
-            );
+        await addDoc(collection(db,"puntosAdmin"),{
 
 
-            modoAgregarPunto =
-                false;
+            nombre:nombre,
+
+            lat:e.latlng.lat,
+
+            lng:e.latlng.lng,
+
+            color:"#3388ff",
+
+            publico:false,
+
+            icono:icono || "📍"
 
 
-            document
-            .getElementById(
-                "administrarPuntos"
-            )
-            .innerText =
-                "📍 Puntos";
+        });
 
 
-            cargarPuntosAdmin();
 
-        }
-    );
+        modoAgregarPunto = false;
+
+
+        document.getElementById("administrarPuntos").innerText =
+        "📍 Puntos";
+
+
+        cargarPuntosAdmin();
+
+
+    });
+
 
 
     // =========================
@@ -1500,456 +965,367 @@ Escribí uno de ellos.`,
 
     if(navigator.onLine){
 
-        mostrarClimaEnMalla(
-            polygon
-        );
+        mostrarClimaEnMalla(polygon);
 
     }
 
 
+
     // =========================
-    // POPUP
+    // POPUP ADMIN
     // =========================
 
     if(esAdmin){
+
 
         polygon.bindPopup(`
 
             <div style="width:200px">
 
-                <h3>
-                    ${data.nombre}
-                </h3>
+                <h3>${data.nombre}</h3>
 
-                <p>
-                    Modo administrador
-                </p>
+                <p>Modo administrador</p>
 
             </div>
 
         `);
 
+
+
     }else{
+
+
+        // =========================
+        // POPUP USUARIO + NOTAS
+        // =========================
+
 
         polygon.bindPopup(`
 
             <div style="width:200px">
 
-                <h4>
-                    ${data.nombre}
-                </h4>
+
+                <h4>${data.nombre}</h4>
+
 
                 <textarea
+
                     id="nota-${id}"
+
                     placeholder="Escribí una nota..."
-                    style="
-                        width:100%;
-                        height:60px;
-                    "
+
+                    style="width:100%;height:60px;"
+
                 ></textarea>
 
+
+
                 <br><br>
 
-                <label>
-                    Fecha:
-                </label>
+
+                <label>Fecha:</label>
+
 
                 <input
+
                     type="date"
+
                     id="fecha-${id}"
+
                     style="width:100%"
+
                 >
 
+
+
                 <br><br>
+
+
 
                 <label>
 
                     <input
+
                         type="checkbox"
+
                         id="check-${id}"
+
                     >
 
                     Completado
 
                 </label>
 
+
+
                 <br><br>
 
+
+
                 <button
+
                     onclick="guardarNota('${id}')"
+
                 >
+
                     Guardar
+
                 </button>
+
+
 
             </div>
 
         `);
 
+
     }
 
-}
 
+}
 
 // =========================
 // OFFLINE
 // =========================
 
-function guardarTerritoriosLocal(
-    territorios
-){
+function guardarTerritoriosLocal(territorios){
 
-    try{
+  try{
 
-        localStorage.setItem(
+    localStorage.setItem(
+      "territorios",
+      JSON.stringify(territorios)
+    );
 
-            "territorios",
+    console.log(
+      "✅ Territorios guardados en LocalStorage"
+    );
 
-            JSON.stringify(
-                territorios
-            )
+  }catch(err){
 
-        );
+    console.error(
+      "Error guardando en LocalStorage:",
+      err
+    );
 
-
-        console.log(
-            "✅ Territorios guardados en LocalStorage"
-        );
-
-    }catch(err){
-
-        console.error(
-            "Error guardando en LocalStorage:",
-            err
-        );
-
-    }
+  }
 
 }
-
 
 function cargarTerritoriosLocal(){
 
-    try{
+  try{
 
-        const guardados =
-        JSON.parse(
+    const guardados =
+    JSON.parse(
+      localStorage.getItem("territorios")
+    ) || [];
 
-            localStorage.getItem(
-                "territorios"
-            )
+    if(guardados.length === 0){
 
-        ) || [];
+      console.log(
+        "ℹ️ No hay territorios en LocalStorage"
+      );
 
-
-        if(
-            guardados.length === 0
-        ){
-
-            console.log(
-                "ℹ️ No hay territorios en LocalStorage"
-            );
-
-            return [];
-
-        }
-
-
-        console.log(
-            "📡 Cargando territorios desde LocalStorage"
-        );
-
-
-        return guardados;
-
-    }catch(err){
-
-        console.error(
-            "Error cargando LocalStorage:",
-            err
-        );
-
-        return [];
+      return [];
 
     }
 
-}
+    console.log(
+      "📡 Cargando territorios desde LocalStorage"
+    );
 
+    return guardados;
+
+  }catch(err){
+
+    console.error(
+      "Error cargando LocalStorage:",
+      err
+    );
+
+    return [];
+
+  }
+
+}
 
 function cargarTerritoriosOffline(){
 
-    const guardados =
-    cargarTerritoriosLocal();
+  const guardados =
+  cargarTerritoriosLocal();
 
+  guardados.forEach(t => {
 
-    guardados.forEach(t=>{
+    crearTerritorioVisual(t, t.id);
 
-        crearTerritorioVisual(
-            t,
-            t.id
-        );
-
-    });
+  });
 
 }
 
-
 // =========================
-// SINCRONIZACIÓN OFFLINE
+// SINCRONIZACION OFFLINE
 // =========================
 
-function guardarOperacionPendiente(
-    tipo,
-    datos,
-    id = null
-){
+function guardarOperacionPendiente(tipo, datos, id = null){
 
-    try{
+  try{
 
-        let pendientes =
-        JSON.parse(
+    let pendientes =
+    JSON.parse(
+      localStorage.getItem("pendientesFirebase")
+    ) || [];
 
-            localStorage.getItem(
-                "pendientesFirebase"
-            )
+    const operacion = {
+      tipo,
+      datos
+    };
 
-        ) || [];
-
-
-        const operacion = {
-
-            tipo,
-
-            datos
-
-        };
-
-
-        if(id){
-
-            operacion.id =
-                id;
-
-        }
-
-
-        pendientes.push(
-            operacion
-        );
-
-
-        localStorage.setItem(
-
-            "pendientesFirebase",
-
-            JSON.stringify(
-                pendientes
-            )
-
-        );
-
-
-        console.log(
-            "📴 Operación guardada para sincronizar"
-        );
-
-    }catch(err){
-
-        console.error(
-            "Error guardando operación:",
-            err
-        );
-
+    if(id){
+      operacion.id = id;
     }
 
-}
+    pendientes.push(operacion);
 
+    localStorage.setItem(
+      "pendientesFirebase",
+      JSON.stringify(pendientes)
+    );
+
+    console.log(
+      "📴 Operación guardada para sincronizar"
+    );
+
+  }catch(err){
+
+    console.error(
+      "Error guardando operación:",
+      err
+    );
+
+  }
+
+}
 
 function cargarOperacionesPendientes(){
 
-    try{
+  try{
 
-        return JSON.parse(
+    return JSON.parse(
+      localStorage.getItem("pendientesFirebase")
+    ) || [];
 
-            localStorage.getItem(
-                "pendientesFirebase"
-            )
+  }catch(err){
 
-        ) || [];
+    console.error(
+      "Error cargando operaciones:",
+      err
+    );
 
-    }catch(err){
+    return [];
 
-        console.error(
-            "Error cargando operaciones:",
-            err
-        );
-
-        return [];
-
-    }
+  }
 
 }
-
 
 async function sincronizarPendientes(){
 
-    if(!navigator.onLine){
+  const pendientes =
+  cargarOperacionesPendientes();
 
-        return;
-
-    }
-
-
-    const pendientes =
-    cargarOperacionesPendientes();
-
-
-    if(
-        pendientes.length === 0
-    ){
-
-        console.log(
-            "ℹ️ No hay operaciones pendientes"
-        );
-
-        return;
-
-    }
-
+  if(pendientes.length === 0){
 
     console.log(
-        "🔄 Sincronizando cambios..."
+      "ℹ️ No hay operaciones pendientes"
     );
 
+    return;
 
-    const operacionesFallidas = [];
+  }
 
+  console.log(
+    "🔄 Sincronizando cambios..."
+  );
 
-    for(
-        const op of pendientes
-    ){
+  const operacionesFallidas = [];
 
-        try{
+  for(const op of pendientes){
 
-            if(
-                op.tipo === "crear"
-            ){
+    try{
 
-                await addDoc(
+      if(op.tipo === "crear"){
 
-                    collection(
-                        db,
-                        "territorios"
-                    ),
+        await addDoc(
+          collection(db, "territorios"),
+          op.datos
+        );
 
-                    op.datos
+      }else if(op.tipo === "editar"){
 
-                );
+        await updateDoc(
+          doc(db, "territorios", op.id),
+          op.datos
+        );
 
-            }else if(
-                op.tipo === "editar"
-            ){
+      }else if(op.tipo === "eliminar"){
 
-                await updateDoc(
+        await deleteDoc(
+          doc(db, "territorios", op.id)
+        );
 
-                    doc(
-                        db,
-                        "territorios",
-                        op.id
-                    ),
+      }
 
-                    op.datos
+    }catch(err){
 
-                );
+      console.error(
+        "⚠️ Error sincronizando operación:",
+        op.tipo,
+        err
+      );
 
-            }else if(
-                op.tipo === "eliminar"
-            ){
-
-                await deleteDoc(
-
-                    doc(
-                        db,
-                        "territorios",
-                        op.id
-                    )
-
-                );
-
-            }
-
-        }catch(err){
-
-            console.error(
-                "⚠️ Error sincronizando operación:",
-                op.tipo,
-                err
-            );
-
-
-            operacionesFallidas.push(
-                op
-            );
-
-        }
+      operacionesFallidas.push(op);
 
     }
 
+  }
 
-    if(
-        operacionesFallidas.length === 0
-    ){
+  if(operacionesFallidas.length === 0){
 
-        localStorage.removeItem(
-            "pendientesFirebase"
-        );
+    localStorage.removeItem(
+      "pendientesFirebase"
+    );
 
+    console.log(
+      "✅ Sincronización completada"
+    );
 
-        console.log(
-            "✅ Sincronización completada"
-        );
+    await recargarMapa();
 
+  }else{
 
-        await recargarMapa();
+    localStorage.setItem(
+      "pendientesFirebase",
+      JSON.stringify(operacionesFallidas)
+    );
 
-    }else{
+    console.log(
+      "⚠️ Error sincronizando, se intentará nuevamente"
+    );
 
-        localStorage.setItem(
-
-            "pendientesFirebase",
-
-            JSON.stringify(
-                operacionesFallidas
-            )
-
-        );
-
-
-        console.log(
-            "⚠️ Error sincronizando, se intentará nuevamente"
-        );
-
-    }
+  }
 
 }
 
+// Escuchar cambios en conexión y sincronizar
+window.addEventListener("online", async ()=>{
 
-window.addEventListener(
-    "online",
-    async()=>{
+  console.log("🌐 Conexión restaurada");
 
-        console.log(
-            "🌐 Conexión restaurada"
-        );
+  actualizarEstadoConexion();
 
+  await sincronizarPendientes();
 
-        actualizarEstadoConexion();
-
-
-        await sincronizarPendientes();
-
-    }
-);
-
+});
 
 // =========================
 // TERRITORIOS
@@ -1957,93 +1333,71 @@ window.addEventListener(
 
 async function cargarTerritorios(){
 
-    if(navigator.onLine){
+  if(navigator.onLine){
 
-        try{
+    try{
 
-            const snapshot =
-            await getDocs(
+      const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "territorios"
+        )
+      );
 
-                collection(
-                    db,
-                    "territorios"
-                )
+      const territorios = [];
 
-            );
+      snapshot.forEach(docSnap => {
 
+        const data =
+        docSnap.data();
 
-            const territorios = [];
+        territorios.push({
 
+          id:docSnap.id,
+          ...data
 
-            snapshot.forEach(
-                docSnap=>{
+        });
 
-                    const data =
-                    docSnap.data();
-
-
-                    territorios.push({
-
-                        id:
-                            docSnap.id,
-
-                        ...data
-
-                    });
-
-
-                    crearTerritorioVisual(
-
-                        data,
-
-                        docSnap.id
-
-                    );
-
-                }
-            );
-
-
-            guardarTerritoriosLocal(
-                territorios
-            );
-
-
-        }catch(err){
-
-            console.error(
-                "⚠️ Error en Firestore:",
-                err
-            );
-
-
-            console.log(
-                "📡 Cargando territorios desde LocalStorage"
-            );
-
-
-            cargarTerritoriosOffline();
-
-        }
-
-    }else{
-
-        console.log(
-            "🔌 Sin conexión a internet"
+        crearTerritorioVisual(
+          data,
+          docSnap.id
         );
 
+      });
 
-        console.log(
-            "📡 Cargando territorios desde LocalStorage"
-        );
+      guardarTerritoriosLocal(territorios);
 
+    }catch(err){
 
-        cargarTerritoriosOffline();
+      console.error(
+        "⚠️ Error en Firestore:",
+        err
+      );
+
+      console.log(
+        "📡 Cargando territorios desde LocalStorage"
+      );
+
+      cargarTerritoriosOffline();
 
     }
 
-}
+  }else{
 
+    console.log(
+      "🔌 Sin conexión a internet"
+    );
+
+    console.log(
+      "📡 Cargando territorios desde LocalStorage"
+    );
+
+    cargarTerritoriosOffline();
+
+  }
+
+}
 
 // =========================
 // GUARDAR NOTA
@@ -2052,470 +1406,470 @@ async function cargarTerritorios(){
 window.guardarNota =
 async function(id){
 
-    try{
+  try{
 
-        const texto =
-        document.getElementById(
-            `nota-${id}`
-        )?.value;
+    const texto =
+    document.getElementById(
+      `nota-${id}`
+    ).value;
 
+    const fecha =
+    document.getElementById(
+      `fecha-${id}`
+    ).value;
 
-        const fecha =
-        document.getElementById(
-            `fecha-${id}`
-        )?.value;
+    const completado =
+    document.getElementById(
+      `check-${id}`
+    ).checked;
 
+    if(!texto){
 
-        const completado =
-        document.getElementById(
-            `check-${id}`
-        )?.checked;
+      alert("Escribí una nota");
 
-
-        if(!texto){
-
-            alert(
-                "Escribí una nota"
-            );
-
-            return;
-
-        }
-
-
-        await addDoc(
-
-            collection(
-                db,
-                "notas"
-            ),
-
-            {
-
-                territorioId:
-                    id,
-
-                nota:
-                    texto,
-
-                fecha:
-                    fecha,
-
-                completado:
-                    completado,
-
-                timestamp:
-                    Date.now()
-
-            }
-
-        );
-
-
-        alert(
-            "Nota guardada ✅"
-        );
-
-    }catch(err){
-
-        console.error(
-            "Error guardando nota:",
-            err
-        );
-
-
-        alert(
-            "Error: no se pudo guardar la nota"
-        );
+      return;
 
     }
 
+    await addDoc(
+
+      collection(db,"notas"),
+
+      {
+
+        territorioId:id,
+
+        nota:texto,
+
+        fecha,
+
+        completado,
+
+        timestamp:Date.now()
+
+      }
+
+    );
+
+    alert("Nota guardada ✅");
+
+  }catch(err){
+
+    console.error("Error guardando nota:", err);
+
+    alert("Error: no se pudo guardar la nota");
+
+  }
+
 };
 
+// =========================
+// VER NOTAS
+// =========================
+
+document
+.getElementById("verNotas")
+.onclick = async ()=>{
+
+  const pass =
+  prompt("Contraseña:");
+
+  if(
+    pass === ADMIN_PASSWORD &&
+    esAdmin
+  ){
+
+    document
+    .getElementById(
+      "notas-section"
+    )
+    .style.display = "block";
+
+    cargarNotas();
+
+  }else{
+
+    alert("Acceso denegado");
+
+  }
+
+};
+
+async function cargarNotas(){
+
+  try{
+
+    const snapshot =
+    await getDocs(
+      collection(db,"notas")
+    );
+
+    const notas = [];
+
+    snapshot.forEach(docSnap => {
+
+      notas.push({
+
+        id: docSnap.id,
+
+        ...docSnap.data()
+
+      });
+
+    });
+
+    notas.sort(
+      (a,b)=>b.timestamp-a.timestamp
+    );
+
+    const lista =
+    document.getElementById(
+      "lista-notas"
+    );
+
+    lista.innerHTML = "";
+
+    notas.forEach(d => {
+
+      lista.innerHTML += `
+
+        <div style="
+          border-bottom:1px solid #ccc;
+          margin-bottom:10px;
+          padding-bottom:10px;
+        ">
+
+          <p>
+            <strong>Nota:</strong>
+            ${d.nota}
+          </p>
+
+          <p>
+            <strong>Fecha:</strong>
+            ${d.fecha || "Sin fecha"}
+          </p>
+
+          <p>
+            ${
+              d.completado
+              ? "✅ Completado"
+              : "❌ Pendiente"
+            }
+          </p>
+
+          <button
+            onclick="borrarNota('${d.id}')"
+          >
+            Borrar
+          </button>
+
+        </div>
+
+      `;
+
+    });
+
+  }catch(err){
+
+    console.error("Error cargando notas:", err);
+
+    alert("Error: no se pudieron cargar las notas");
+
+  }
+
+}
+
+window.borrarNota =
+async function(id){
+
+  if(!esAdmin){
+    alert("Solo administradores pueden eliminar notas");
+    return;
+  }
+
+  await deleteDoc(
+    doc(db,"notas",id)
+  );
+
+  cargarNotas();
+
+};
+
+window.cerrarNotas = ()=>{
+
+  document
+  .getElementById(
+    "notas-section"
+  )
+  .style.display = "none";
+
+};
 
 // =========================
 // MALLAS
 // =========================
 
 document
-.getElementById(
-    "editarMallas"
-)
-.onclick = async()=>{
+.getElementById("editarMallas")
+.onclick = async ()=>{
 
-    const pass =
-    prompt(
-        "Contraseña:"
+  const pass =
+  prompt("Contraseña:");
+
+  if(
+    pass === ADMIN_PASSWORD &&
+    esAdmin
+  ){
+
+    const panel =
+    document.getElementById(
+      "mallas-section"
     );
 
-
     if(
-
-        pass ===
-        ADMIN_PASSWORD
-
-        &&
-
-        esAdmin
-
+      panel.style.display === "block"
     ){
 
-        const panel =
-        document.getElementById(
-            "mallas-section"
+      panel.style.display = "none";
+
+      if(drawControl){
+
+        map.removeControl(
+          drawControl
         );
 
+        drawControl = null;
 
-        if(
-            panel.style.display ===
-            "block"
-        ){
-
-            panel.style.display =
-                "none";
-
-
-            if(drawControl){
-
-                map.removeControl(
-                    drawControl
-                );
-
-                drawControl =
-                    null;
-
-            }
-
-        }else{
-
-            panel.style.display =
-                "block";
-
-
-            cargarMallas();
-
-
-            activarDibujo();
-
-        }
+      }
 
     }else{
 
-        alert(
-            "Acceso denegado"
-        );
+      panel.style.display = "block";
+
+      cargarMallas();
+
+      activarDibujo();
 
     }
+
+  }else{
+
+    alert("Acceso denegado");
+
+  }
 
 };
 
-
 async function cargarMallas(){
 
-    try{
+  try{
 
-        const snapshot =
-        await getDocs(
+    const snapshot =
+    await getDocs(
+      collection(db,"territorios")
+    );
 
-            collection(
-                db,
-                "territorios"
-            )
+    const lista =
+    document.getElementById(
+      "lista-mallas"
+    );
 
-        );
+    lista.innerHTML = "";
 
+    snapshot.forEach(docSnap => {
 
-        const lista =
-        document.getElementById(
-            "lista-mallas"
-        );
+      const data =
+      docSnap.data();
 
+      lista.innerHTML += `
 
-        lista.innerHTML = "";
+        <div style="
+          border-bottom:1px solid #ccc;
+          margin-bottom:10px;
+        ">
 
+          <input
+            id="nombre-${docSnap.id}"
+            value="${data.nombre}"
+            style="width:100%"
+          >
 
-        snapshot.forEach(
-            docSnap=>{
+          <br><br>
 
-                const data =
-                docSnap.data();
+          <input
+            type="color"
+            id="color-${docSnap.id}"
+            value="${data.color}"
+          >
 
+          <br><br>
 
-                lista.innerHTML += `
+          <button
+            onclick="guardarCambios('${docSnap.id}')"
+          >
+            Guardar
+          </button>
 
-                    <div style="
-                        border-bottom:1px solid #ccc;
-                        margin-bottom:10px;
-                        padding-bottom:10px;
-                    ">
+          <button
+            onclick="eliminarMalla('${docSnap.id}')"
+          >
+            Eliminar
+          </button>
 
-                        <input
-                            id="nombre-${docSnap.id}"
-                            value="${data.nombre || ""}"
-                            style="width:100%"
-                        >
+        </div>
 
-                        <br><br>
+      `;
 
-                        <input
-                            type="color"
-                            id="color-${docSnap.id}"
-                            value="${data.color || "#3388ff"}"
-                        >
+    });
 
-                        <br><br>
+  }catch(err){
 
-                        <button
-                            onclick="guardarCambios('${docSnap.id}')"
-                        >
-                            Guardar
-                        </button>
+    console.error("Error cargando mallas:", err);
 
-                        <button
-                            onclick="eliminarMalla('${docSnap.id}')"
-                        >
-                            Eliminar
-                        </button>
+    alert("Error: no se pudieron cargar las mallas");
 
-                    </div>
-
-                `;
-
-            }
-        );
-
-    }catch(err){
-
-        console.error(
-            "Error cargando mallas:",
-            err
-        );
-
-
-        alert(
-            "Error: no se pudieron cargar las mallas"
-        );
-
-    }
+  }
 
 }
-
 
 window.guardarCambios =
 async function(id){
 
-    if(!esAdmin){
+  if(!esAdmin){
+    alert("Solo administradores pueden editar territorios");
+    return;
+  }
 
-        alert(
-            "Solo administradores pueden editar territorios"
-        );
+  try{
 
-        return;
+    const nombre =
+    document.getElementById(
+      `nombre-${id}`
+    ).value;
 
-    }
+    const color =
+    document.getElementById(
+      `color-${id}`
+    ).value;
 
+    const datosActualizados = {
 
-    try{
+      nombre,
+      color
 
-        const nombre =
-        document.getElementById(
-            `nombre-${id}`
-        ).value;
+    };
 
+    if(!navigator.onLine){
 
-        const color =
-        document.getElementById(
-            `color-${id}`
-        ).value;
+      guardarOperacionPendiente(
+        "editar",
+        datosActualizados,
+        id
+      );
 
+      alert("Sin conexión. Se sincronizará cuando haya internet.");
 
-        const datosActualizados = {
-
-            nombre:
-                nombre.trim(),
-
-            color
-
-        };
-
-
-        if(!navigator.onLine){
-
-            guardarOperacionPendiente(
-
-                "editar",
-
-                datosActualizados,
-
-                id
-
-            );
-
-
-            alert(
-                "Sin conexión. Se sincronizará cuando haya internet."
-            );
-
-
-            return;
-
-        }
-
-
-        await updateDoc(
-
-            doc(
-                db,
-                "territorios",
-                id
-            ),
-
-            datosActualizados
-
-        );
-
-
-        alert(
-            "Cambios guardados ✅"
-        );
-
-
-        await recargarMapa();
-
-    }catch(err){
-
-        console.error(
-            "Error guardando cambios:",
-            err
-        );
-
-
-        alert(
-            "Error: no se pudieron guardar los cambios"
-        );
+      return;
 
     }
+
+    await updateDoc(
+
+      doc(
+        db,
+        "territorios",
+        id
+      ),
+
+      datosActualizados
+
+    );
+
+    alert("Cambios guardados ✅");
+
+    recargarMapa();
+
+  }catch(err){
+
+    console.error("Error guardando cambios:", err);
+
+    alert("Error: no se pudieron guardar los cambios");
+
+  }
 
 };
-
 
 window.eliminarMalla =
 async function(id){
 
-    if(!esAdmin){
+  if(!esAdmin){
+    alert("Solo administradores pueden eliminar territorios");
+    return;
+  }
 
-        alert(
-            "Solo administradores pueden eliminar territorios"
-        );
-
-        return;
-
-    }
-
-
-    if(
-        !confirm(
-            "¿Eliminar malla?"
-        )
-    ){
-
-        return;
-
-    }
-
+  if(confirm("¿Eliminar malla?")){
 
     try{
 
-        if(!navigator.onLine){
+      if(!navigator.onLine){
 
-            guardarOperacionPendiente(
-
-                "eliminar",
-
-                {},
-
-                id
-
-            );
-
-
-            alert(
-                "Sin conexión. Se sincronizará cuando haya internet."
-            );
-
-
-            return;
-
-        }
-
-
-        await deleteDoc(
-
-            doc(
-                db,
-                "territorios",
-                id
-            )
-
+        guardarOperacionPendiente(
+          "eliminar",
+          {},
+          id
         );
 
+        alert("Sin conexión. Se sincronizará cuando haya internet.");
 
-        alert(
-            "Malla eliminada ✅"
-        );
+        return;
 
+      }
 
-        await recargarMapa();
+      await deleteDoc(
+        doc(
+          db,
+          "territorios",
+          id
+        )
+      );
 
+      alert("Malla eliminada ✅");
 
-        cargarMallas();
+      recargarMapa();
+
+      cargarMallas();
 
     }catch(err){
 
-        console.error(
-            "Error eliminando malla:",
-            err
-        );
+      console.error("Error eliminando malla:", err);
 
-
-        alert(
-            "Error: no se pudo eliminar la malla"
-        );
+      alert("Error: no se pudo eliminar la malla");
 
     }
 
-};
+  }
 
+};
 
 window.cerrarMallas = ()=>{
 
-    const panel =
-    document.getElementById(
-        "mallas-section"
+  document
+  .getElementById(
+    "mallas-section"
+  )
+  .style.display = "none";
+
+  if(drawControl){
+
+    map.removeControl(
+      drawControl
     );
 
+    drawControl = null;
 
-    if(panel){
-
-        panel.style.display =
-            "none";
-
-    }
-
-
-    if(drawControl){
-
-        map.removeControl(
-            drawControl
-        );
-
-        drawControl =
-            null;
-
-    }
+  }
 
 };
-
 
 // =========================
 // RECARGAR MAPA
@@ -2523,270 +1877,148 @@ window.cerrarMallas = ()=>{
 
 async function recargarMapa(){
 
-    // =========================
-    // ELIMINAR POLÍGONOS
-    // =========================
-
+    // Eliminar mallas
     map.eachLayer(layer=>{
 
-        if(
-            layer instanceof L.Polygon
-            &&
-            !(layer instanceof L.Rectangle)
-        ){
+        if(layer instanceof L.Polygon){
 
-            map.removeLayer(
-                layer
-            );
+            map.removeLayer(layer);
 
         }
 
     });
 
+    // Eliminar clima
+    climaMarkers.forEach(marker=>{
 
-    // =========================
-    // ELIMINAR CLIMA
-    // =========================
+        if(map.hasLayer(marker)){
 
-    climaMarkers.forEach(
-        marker=>{
-
-            if(
-                map.hasLayer(marker)
-            ){
-
-                map.removeLayer(
-                    marker
-                );
-
-            }
+            map.removeLayer(marker);
 
         }
-    );
 
+    });
 
     climaMarkers = [];
 
+    // Eliminar puntos
+    marcadoresPuntos.forEach(marker=>{
 
-    // =========================
-    // ELIMINAR PUNTOS
-    // =========================
+        if(map.hasLayer(marker)){
 
-    marcadoresPuntos.forEach(
-        marker=>{
-
-            if(
-                map.hasLayer(marker)
-            ){
-
-                map.removeLayer(
-                    marker
-                );
-
-            }
+            map.removeLayer(marker);
 
         }
-    );
 
+    });
 
     marcadoresPuntos = [];
 
-
-    // =========================
-    // CARGAR TERRITORIOS
-    // =========================
-
+    // Cargar territorios
     await cargarTerritorios();
 
-
-    // =========================
-    // CARGAR PUNTOS
-    // =========================
-
+    // Cargar puntos según el tipo de usuario
+    // Admin -> todos
+    // Usuario aprobado -> solo públicos
+    // Invitado -> ninguno
     await cargarPuntosAdmin();
-
-
-    // =========================
-    // CARGAR LETRAS
-    // =========================
-
-    await cargarLetrasAdmin();
 
 }
 
-
 // =========================
-// UBICACIÓN
+// UBICACION
 // =========================
 
 let watchId = null;
 
-let userMarker = null;
-
+let userMarker = null; // ubicación en vivo
 
 document
 .getElementById(
-    "toggleLocation"
+  "toggleLocation"
 )
 .onclick = ()=>{
 
-    if(watchId){
+  if(watchId){
 
-        navigator.geolocation.clearWatch(
-            watchId
-        );
+    navigator
+    .geolocation
+    .clearWatch(watchId);
 
+    watchId = null;
 
-        watchId =
-            null;
+    if(userMarker){
 
-
-        if(userMarker){
-
-            map.removeLayer(
-                userMarker
-            );
-
-            userMarker =
-                null;
-
-        }
-
-
-        document
-        .getElementById(
-            "toggleLocation"
-        )
-        .innerText =
-            "📍 Mi ubicación";
-
-
-        return;
+      map.removeLayer(
+        userMarker
+      );
 
     }
 
+    document
+    .getElementById(
+      "toggleLocation"
+    )
+    .innerText =
+    "Activar ubicación";
 
-    if(!navigator.geolocation){
-
-        alert(
-            "Tu navegador no permite obtener la ubicación."
-        );
-
-        return;
-
-    }
-
+  }else{
 
     watchId =
     navigator
     .geolocation
-    .watchPosition(
+    .watchPosition(pos => {
 
-        pos=>{
+      const {
+        latitude,
+        longitude
+      } = pos.coords;
 
-            const latitude =
-                pos.coords.latitude;
+      if(userMarker){
 
-            const longitude =
-                pos.coords.longitude;
+        userMarker.setLatLng([
+          latitude,
+          longitude
+        ]);
 
+      }else{
 
-            if(userMarker){
+        userMarker =
+        L.marker([
+          latitude,
+          longitude
+        ]).addTo(map);
 
-                userMarker.setLatLng([
+      }
 
-                    latitude,
+      map.setView(
+        [
+          latitude,
+          longitude
+        ],
+        15
+      );
 
-                    longitude
-
-                ]);
-
-            }else{
-
-                userMarker =
-                L.marker([
-
-                    latitude,
-
-                    longitude
-
-                ]).addTo(map);
-
-            }
-
-
-            map.setView(
-
-                [
-
-                    latitude,
-
-                    longitude
-
-                ],
-
-                15
-
-            );
-
-        },
-
-        error=>{
-
-            console.error(
-                "Error ubicación:",
-                error
-            );
-
-
-            alert(
-                "No se pudo obtener tu ubicación."
-            );
-
-        },
-
-        {
-
-            enableHighAccuracy:true,
-
-            maximumAge:5000,
-
-            timeout:10000
-
-        }
-
-    );
-
+    });
 
     document
     .getElementById(
-        "toggleLocation"
+      "toggleLocation"
     )
     .innerText =
-        "📍 Desactivar ubicación";
+    "Desactivar ubicación";
+
+  }
 
 };
-
 
 // =========================
 // ADMINISTRADORES
 // =========================
 
-document
-.getElementById(
-    "administrarAdmins"
-)
-.onclick = ()=>{
+document.getElementById("administrarAdmins").onclick = ()=>{
 
-    const panel =
-    document.getElementById(
-        "admins-section"
-    );
-
-
-    panel.style.display =
-        "block";
-
+    document.getElementById("admins-section").style.display="block";
 
     cargarAdmins();
 
@@ -2794,18 +2026,11 @@ document
 
 };
 
+window.cerrarAdmins=()=>{
 
-window.cerrarAdmins = ()=>{
-
-    document
-    .getElementById(
-        "admins-section"
-    )
-    .style.display =
-        "none";
+    document.getElementById("admins-section").style.display="none";
 
 };
-
 
 // =========================
 // ADMINS
@@ -2813,499 +2038,310 @@ window.cerrarAdmins = ()=>{
 
 async function cargarAdmins(){
 
-    const lista =
-    document.getElementById(
-        "lista-admins"
+    const lista = document.getElementById("lista-admins");
+
+    lista.innerHTML = "";
+
+    const snapshot = await getDocs(
+        collection(db,"usuarios")
     );
 
 
-    lista.innerHTML =
-        "";
 
+    // =========================
+    // ADMINISTRADORES
+    // =========================
 
-    const snapshot =
-    await getDocs(
-        collection(
-            db,
-            "usuarios"
-        )
-    );
+    lista.innerHTML += "<h4>👑 Administradores</h4>";
 
+    snapshot.forEach(docSnap=>{
 
-    lista.innerHTML +=
-        "<h4>👑 Administradores</h4>";
+        const data = docSnap.data();
 
+        if(
+            data.rol !== "admin" &&
+            data.rol !== "principal"
+        ) return;
 
-    snapshot.forEach(
-        docSnap=>{
+        lista.innerHTML += `
 
-            const data =
-            docSnap.data();
+        <div style="
+            border:1px solid #ccc;
+            border-radius:8px;
+            padding:10px;
+            margin-bottom:10px;
+        ">
 
+            <b>${data.nombreCompleto || data.nombre}</b>
 
-            if(
+            <br>
 
-                data.rol !== "admin"
+            ${data.email}
 
-                &&
+            <br><br>
 
-                data.rol !== "principal"
-
-            ){
-
-                return;
-
+            ${
+                data.rol==="principal"
+                ? "🛡️ Administrador principal"
+                : "🛡️ Administrador"
             }
 
+            <br><br>
 
-            lista.innerHTML += `
+            ${
+                data.rol==="principal"
+                ? ""
+                : `
+                <button onclick="quitarAdmin('${docSnap.id}')">
+                    ⬇ Quitar administrador
+                </button>
 
-                <div style="
-                    border:1px solid #ccc;
-                    border-radius:8px;
-                    padding:10px;
-                    margin-bottom:10px;
-                ">
-
-                    <b>
-                        ${data.nombreCompleto || data.nombre || ""}
-                    </b>
-
-                    <br>
-
-                    ${data.email || ""}
-
-                    <br><br>
-
-                    ${
-                        data.rol === "principal"
-                        ?
-                        "🛡️ Administrador principal"
-                        :
-                        "🛡️ Administrador"
-                    }
-
-                    <br><br>
-
-                    ${
-                        data.rol === "principal"
-                        ?
-                        ""
-                        :
-                        `
-
-                            <button
-                                onclick="quitarAdmin('${docSnap.id}')"
-                            >
-                                ⬇ Quitar administrador
-                            </button>
-
-                            <button
-                                onclick="eliminarUsuario('${docSnap.id}')"
-                            >
-                                🗑 Eliminar
-                            </button>
-
-                        `
-                    }
-
-                </div>
-
-            `;
-
-        }
-    );
-
-
-    lista.innerHTML +=
-        "<hr><h4>✅ Usuarios aprobados</h4>";
-
-
-    snapshot.forEach(
-        docSnap=>{
-
-            const data =
-            docSnap.data();
-
-
-            if(!data.aprobado){
-
-                return;
-
+                <button onclick="eliminarUsuario('${docSnap.id}')">
+                    🗑 Eliminar
+                </button>
+                `
             }
 
+        </div>
 
-            if(
+        `;
 
-                data.rol === "admin"
-
-                ||
-
-                data.rol === "principal"
-
-            ){
-
-                return;
-
-            }
+    });
 
 
-            lista.innerHTML += `
 
-                <div style="
-                    border:1px solid #ccc;
-                    border-radius:8px;
-                    padding:10px;
-                    margin-bottom:10px;
-                ">
+    // =========================
+    // USUARIOS APROBADOS
+    // =========================
 
-                    <b>
-                        ${data.nombreCompleto || data.nombre || ""}
-                    </b>
+    lista.innerHTML += "<hr><h4>✅ Usuarios aprobados</h4>";
 
-                    <br>
+    snapshot.forEach(docSnap=>{
 
-                    ${data.email || ""}
+        const data = docSnap.data();
 
-                    <br><br>
+        if(!data.aprobado) return;
 
-                    👤 Usuario
+        if(
+            data.rol==="admin" ||
+            data.rol==="principal"
+        ) return;
 
-                    <br><br>
+        lista.innerHTML += `
 
-                    <button
-                        onclick="hacerAdmin('${docSnap.id}')"
-                    >
-                        👑 Hacer administrador
-                    </button>
+        <div style="
+            border:1px solid #ccc;
+            border-radius:8px;
+            padding:10px;
+            margin-bottom:10px;
+        ">
 
-                    <button
-                        onclick="eliminarUsuario('${docSnap.id}')"
-                    >
-                        🗑 Eliminar
-                    </button>
+            <b>${data.nombreCompleto || data.nombre}</b>
 
-                </div>
+            <br>
 
-            `;
+            ${data.email}
 
-        }
-    );
+            <br><br>
+
+            👤 Usuario
+
+            <br><br>
+
+            <button onclick="hacerAdmin('${docSnap.id}')">
+                👑 Hacer administrador
+            </button>
+
+            <button onclick="eliminarUsuario('${docSnap.id}')">
+                🗑 Eliminar
+            </button>
+
+        </div>
+
+        `;
+
+    });
 
 }
 
-
 // =========================
-// AGREGAR ADMIN
+// HACER ADMIN POR EMAIL
 // =========================
 
-document
-.getElementById(
-    "agregarAdmin"
-)
-.onclick = async()=>{
+document.getElementById("agregarAdmin").onclick = async()=>{
 
     if(!esAdminPrincipal){
 
-        alert(
-            "Solo el administrador principal puede agregar administradores."
-        );
+        alert("Solo el administrador principal puede agregar administradores.");
 
         return;
 
     }
 
+    const email = document
+        .getElementById("nuevoAdminEmail")
+        .value
+        .trim()
+        .toLowerCase();
 
-    const email =
-    document
-    .getElementById(
-        "nuevoAdminEmail"
-    )
-    .value
-    .trim()
-    .toLowerCase();
+    if(email===""){
 
-
-    if(email === ""){
-
-        alert(
-            "Escribí un correo."
-        );
+        alert("Escribí un correo.");
 
         return;
 
     }
 
-
-    const q =
-    query(
-
-        collection(
-            db,
-            "usuarios"
-        ),
-
-        where(
-            "email",
-            "==",
-            email
-        )
-
+    const q = query(
+        collection(db,"usuarios"),
+        where("email","==",email)
     );
 
-
-    const resultado =
-    await getDocs(q);
-
+    const resultado = await getDocs(q);
 
     if(resultado.empty){
 
-        alert(
-            "No existe ningún usuario con ese correo."
-        );
+        alert("No existe ningún usuario con ese correo.");
 
         return;
 
     }
 
-
-    const documento =
-        resultado.docs[0];
-
+    const documento = resultado.docs[0];
 
     await updateDoc(
 
-        doc(
-            db,
-            "usuarios",
-            documento.id
-        ),
+        doc(db,"usuarios",documento.id),
 
         {
 
             aprobado:true,
-
             rol:"admin"
 
         }
 
     );
 
+    document.getElementById("nuevoAdminEmail").value="";
 
-    document
-    .getElementById(
-        "nuevoAdminEmail"
-    )
-    .value =
-        "";
-
-
-    alert(
-        "✅ Ahora es administrador."
-    );
-
+    alert("✅ Ahora es administrador.");
 
     cargarAdmins();
-
     cargarSolicitudes();
 
 };
-
 
 // =========================
 // HACER ADMIN
 // =========================
 
-window.hacerAdmin =
-async function(id){
+window.hacerAdmin = async(id)=>{
 
     await updateDoc(
-
-        doc(
-            db,
-            "usuarios",
-            id
-        ),
-
+        doc(db,"usuarios",id),
         {
-
-            aprobado:true,
-
             rol:"admin"
-
         }
-
     );
-
 
     cargarAdmins();
 
 };
-
 
 // =========================
 // QUITAR ADMIN
 // =========================
 
-window.quitarAdmin =
-async function(id){
+window.quitarAdmin = async(id)=>{
 
     await updateDoc(
-
-        doc(
-            db,
-            "usuarios",
-            id
-        ),
-
+        doc(db,"usuarios",id),
         {
-
             rol:"usuario"
-
         }
-
     );
-
 
     cargarAdmins();
 
 };
-
 
 // =========================
 // ELIMINAR USUARIO
 // =========================
 
-window.eliminarUsuario =
-async function(id){
+window.eliminarUsuario = async(id)=>{
 
-    if(
-        !confirm(
-            "¿Eliminar este usuario?"
-        )
-    ){
-
-        return;
-
-    }
-
+    if(!confirm("¿Eliminar este usuario?")) return;
 
     await deleteDoc(
-
-        doc(
-            db,
-            "usuarios",
-            id
-        )
-
+        doc(db,"usuarios",id)
     );
 
-
     cargarAdmins();
-
     cargarSolicitudes();
 
 };
 
-
 // =========================
-// SOLICITUDES
+// SOLICITUDES DE USUARIOS
 // =========================
 
 async function cargarSolicitudes(){
 
-    let html =
-        "<hr><h4>📨 Solicitudes</h4>";
+    let html="<hr><h4>📨 Solicitudes</h4>";
 
+    const snapshot=await getDocs(collection(db,"usuarios"));
 
-    const snapshot =
-    await getDocs(
-        collection(
-            db,
-            "usuarios"
-        )
-    );
+    snapshot.forEach(docSnap=>{
 
+        const data=docSnap.data();
 
-    snapshot.forEach(
-        docSnap=>{
+        if(data.aprobado===true) return;
 
-            const data =
-            docSnap.data();
+        html+=`
 
+        <div style="
+            border:1px solid #ccc;
+            border-radius:8px;
+            padding:10px;
+            margin-bottom:10px;
+        ">
 
-            if(
-                data.aprobado === true
-            ){
+            <b>${data.nombre}</b>
 
-                return;
+            <br>
 
-            }
+            ${data.email}
 
+            <br><br>
 
-            html += `
+            <button onclick="aprobarUsuario('${docSnap.id}')">
+                ✅ Aprobar
+            </button>
 
-                <div style="
-                    border:1px solid #ccc;
-                    border-radius:8px;
-                    padding:10px;
-                    margin-bottom:10px;
-                ">
+            <button onclick="rechazarUsuario('${docSnap.id}')">
+                ❌ Rechazar
+            </button>
 
-                    <b>
-                        ${data.nombreCompleto || data.nombre || ""}
-                    </b>
+        </div>
 
-                    <br>
+        `;
 
-                    ${data.email || ""}
+    });
 
-                    <br><br>
-
-                    <button
-                        onclick="aprobarUsuario('${docSnap.id}')"
-                    >
-                        ✅ Aprobar
-                    </button>
-
-                    <button
-                        onclick="rechazarUsuario('${docSnap.id}')"
-                    >
-                        ❌ Rechazar
-                    </button>
-
-                </div>
-
-            `;
-
-        }
-    );
-
-
-    document
-    .getElementById(
-        "lista-solicitudes"
-    )
-    .innerHTML =
-        html;
+    document.getElementById("lista-solicitudes").innerHTML = html;
 
 }
-
 
 // =========================
 // APROBAR
 // =========================
 
-window.aprobarUsuario =
-async function(id){
+window.aprobarUsuario=async(id)=>{
 
     await updateDoc(
 
-        doc(
-            db,
-            "usuarios",
-            id
-        ),
+        doc(db,"usuarios",id),
 
         {
 
@@ -3315,6 +2351,25 @@ async function(id){
 
     );
 
+    cargarAdmins();
+
+    cargarSolicitudes();
+
+};
+
+// =========================
+// RECHAZAR
+// =========================
+
+window.rechazarUsuario=async(id)=>{
+
+    if(!confirm("¿Eliminar solicitud?")) return;
+
+    await deleteDoc(
+
+        doc(db,"usuarios",id)
+
+    );
 
     cargarAdmins();
 
@@ -3322,108 +2377,175 @@ async function(id){
 
 };
 
+// =========================
+// USUARIOS PENDIENTES
+// =========================
+
+async function cargarUsuariosPendientes(){
+
+    const lista = document.getElementById("lista-admins");
+
+    lista.innerHTML = "<h4>Solicitudes de acceso</h4>";
+
+    const snapshot = await getDocs(collection(db,"usuarios"));
+
+    snapshot.forEach(docSnap=>{
+
+        const data = docSnap.data();
+
+        if(data.aprobado) return;
+
+        lista.innerHTML += `
+
+        <div style="
+            border:1px solid #ccc;
+            padding:10px;
+            margin-bottom:10px;
+            border-radius:8px;
+        ">
+
+            <b>${data.nombre}</b>
+
+            <br>
+
+            ${data.email}
+
+            <br><br>
+
+            <button onclick="aprobarUsuario('${docSnap.id}')">
+
+                ✅ Aprobar
+
+            </button>
+
+        </div>
+
+        `;
+
+    });
+
+}
 
 // =========================
-// RECHAZAR
+// PUNTOS ADMIN
 // =========================
 
-window.rechazarUsuario =
-async function(id){
+const ICONOS_PUNTO=[
+"PIN",
+"🏠",
+"🌳",
+"⚠️",
+"⭐",
+"🚗",
+"⛔",
+"🏢"
+];
 
-    if(
-        !confirm(
-            "¿Eliminar solicitud?"
-        )
-    ){
+
+// =========================
+// ACTIVAR MODO AGREGAR PUNTO
+// =========================
+
+document.getElementById("administrarPuntos").onclick=()=>{
+
+
+    modoAgregarPunto=!modoAgregarPunto;
+
+
+    if(modoAgregarPunto){
+
+        alert("Hace clic en el mapa para colocar un punto.");
+
+        document.getElementById("administrarPuntos").innerText="❌ Cancelar";
+
+    }else{
+
+        document.getElementById("administrarPuntos").innerText="📍 Puntos";
+
+    }
+
+};
+
+
+
+// =========================
+// CREAR PUNTO EN MAPA
+// =========================
+
+map.on("click",async(e)=>{
+
+
+    if(!esAdmin) return;
+
+    if(!modoAgregarPunto) return;
+
+
+
+    const nombre = prompt(
+        "Nombre del punto:"
+    );
+
+
+    if(!nombre){
+
+        modoAgregarPunto=false;
+
+        document.getElementById("administrarPuntos").innerText="📍 Puntos";
 
         return;
 
     }
 
 
-    await deleteDoc(
 
-        doc(
-            db,
-            "usuarios",
-            id
-        )
+    const icono = prompt(
+`Elegí un icono:
 
+🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
+
+Escribí uno`,
+"📍"
+);
+
+
+
+    await addDoc(
+        collection(db,"puntosAdmin"),
+        {
+
+            nombre,
+
+            lat:e.latlng.lat,
+
+            lng:e.latlng.lng,
+
+            color:"#3388ff",
+
+            publico:false,
+
+            icono:icono || "📍",
+
+            creadoPor:currentUser.email,
+
+            fecha:Date.now()
+
+        }
     );
 
 
-    cargarAdmins();
 
-    cargarSolicitudes();
-
-};
+    modoAgregarPunto=false;
 
 
-// =========================
-// PUNTOS ADMIN
-// =========================
-
-const ICONOS_PUNTO = [
-
-    "PIN",
-
-    "🏠",
-
-    "🌳",
-
-    "⚠️",
-
-    "⭐",
-
-    "🚗",
-
-    "⛔",
-
-    "🏢"
-
-];
+    document.getElementById("administrarPuntos").innerText="📍 Puntos";
 
 
-// =========================
-// ADMINISTRAR PUNTOS
-// =========================
-
-document
-.getElementById(
-    "administrarPuntos"
-)
-.onclick = ()=>{
-
-    modoAgregarPunto =
-        !modoAgregarPunto;
+    cargarPuntosAdmin();
 
 
-    if(modoAgregarPunto){
-
-        alert(
-            "Hacé clic en el mapa para colocar un punto."
-        );
+});
 
 
-        document
-        .getElementById(
-            "administrarPuntos"
-        )
-        .innerText =
-            "❌ Cancelar";
-
-    }else{
-
-        document
-        .getElementById(
-            "administrarPuntos"
-        )
-        .innerText =
-            "📍 Puntos";
-
-    }
-
-};
 
 
 // =========================
@@ -3432,392 +2554,346 @@ document
 
 async function cargarPuntosAdmin(){
 
-    marcadoresPuntos.forEach(
-        marker=>{
 
-            if(
-                map.hasLayer(marker)
-            ){
 
-                map.removeLayer(
-                    marker
-                );
+    // borrar puntos viejos
 
-            }
+    marcadoresPuntos.forEach(m=>{
+
+        if(map.hasLayer(m)){
+
+            map.removeLayer(m);
 
         }
+
+    });
+
+
+    marcadoresPuntos=[];
+
+
+
+    const snapshot =
+    await getDocs(
+        collection(db,"puntosAdmin")
     );
 
 
-    marcadoresPuntos = [];
 
+    snapshot.forEach(docSnap=>{
 
-    if(!navigator.onLine){
 
-        return;
+        const data=docSnap.data();
 
-    }
 
 
-    try{
+        // =========================
+        // PERMISOS
+        // =========================
 
-        const snapshot =
-        await getDocs(
 
-            collection(
-                db,
-                "puntosAdmin"
-            )
+        // INVITADO
+        if(esInvitado){
 
-        );
+            return;
 
+        }
 
-        snapshot.forEach(
-            docSnap=>{
 
-                const data =
-                docSnap.data();
 
+        // USUARIO APROBADO
+        // Solo públicos
 
-                // INVITADO
+        if(
+            !esAdmin &&
+            data.publico !== true
+        ){
 
-                if(esInvitado){
+            return;
 
-                    return;
+        }
 
-                }
 
 
-                // USUARIO NORMAL
+        let htmlIcono="";
 
-                if(
 
-                    !esAdmin
 
-                    &&
+        if(
+            (data.icono || "PIN")==="PIN"
+        ){
 
-                    data.publico !== true
 
-                ){
+            htmlIcono=`
 
-                    return;
+            <svg width="24" height="32" viewBox="0 0 24 24">
 
-                }
+            <path
 
+            fill="${data.color || "#3388ff"}"
 
-                let htmlIcono =
-                    "";
+            stroke="white"
 
+            stroke-width="1.5"
 
-                if(
-                    (data.icono || "PIN")
-                    ===
-                    "PIN"
-                ){
+            d="
+            M12 2
+            C8 2 5 5 5 9
+            C5 14 12 22 12 22
+            C12 22 19 14 19 9
+            C19 5 16 2 12 2Z"
 
-                    htmlIcono = `
+            />
 
-                        <svg
-                            width="24"
-                            height="32"
-                            viewBox="0 0 24 24"
-                        >
+            <circle
+            cx="12"
+            cy="9"
+            r="3"
+            fill="white"/>
 
-                            <path
+            </svg>
 
-                                fill="${data.color || "#3388ff"}"
+            `;
 
-                                stroke="white"
 
-                                stroke-width="1.5"
+        }else{
 
-                                d="
-                                    M12 2
-                                    C8 2 5 5 5 9
-                                    C5 14 12 22 12 22
-                                    C12 22 19 14 19 9
-                                    C19 5 16 2 12 2Z
-                                "
 
-                            />
+            htmlIcono=`
 
-                            <circle
-                                cx="12"
-                                cy="9"
-                                r="3"
-                                fill="white"
-                            />
+            <div class="iconoPuntoMapa">
 
-                        </svg>
+            ${data.icono}
 
-                    `;
+            </div>
 
-                }else{
+            `;
 
-                    htmlIcono = `
+        }
 
-                        <div class="iconoPuntoMapa">
 
-                            ${data.icono}
 
-                        </div>
 
-                    `;
+        const icono=L.divIcon({
 
-                }
+            html:htmlIcono,
 
+            className:"",
 
-                const icono =
-                L.divIcon({
+            iconSize:[24,24],
 
-                    html:
-                        htmlIcono,
+            iconAnchor:[12,12]
 
-                    className:
-                        "",
+        });
 
-                    iconSize:
-                        [24,24],
 
-                    iconAnchor:
-                        [12,12]
 
-                });
+        const marcador=L.marker(
 
+            [
+            data.lat,
+            data.lng
+            ],
 
-                const marcador =
-                L.marker(
+            {
+                icon:icono
+            }
 
-                    [
+        ).addTo(map);
 
-                        data.lat,
 
-                        data.lng
 
-                    ],
 
-                    {
+        marcador.bindTooltip(
 
-                        icon
+            data.nombre,
 
-                    }
+            {
 
-                ).addTo(map);
+            permanent:
+            map.getZoom()>=15,
 
+            direction:"top",
 
-                marcador.bindTooltip(
+            offset:[0,-20],
 
-                    data.nombre,
-
-                    {
-
-                        permanent:
-                            map.getZoom() >= 15,
-
-                        direction:
-                            "top",
-
-                        offset:
-                            [0,-20],
-
-                        className:
-                            "nombrePuntoAdmin"
-
-                    }
-
-                );
-
-
-                // =========================
-                // ADMIN
-                // =========================
-
-                if(esAdmin){
-
-                    let opciones =
-                        "";
-
-
-                    ICONOS_PUNTO.forEach(
-                        i=>{
-
-                            opciones += `
-
-                                <option
-                                    value="${i}"
-                                    ${
-                                        (data.icono || "PIN")
-                                        ===
-                                        i
-                                        ?
-                                        "selected"
-                                        :
-                                        ""
-                                    }
-                                >
-
-                                    ${
-                                        i === "PIN"
-                                        ?
-                                        "📌 Pin"
-                                        :
-                                        i
-                                    }
-
-                                </option>
-
-                            `;
-
-                        }
-                    );
-
-
-                    marcador.bindPopup(`
-
-                        <b>
-                            ${data.nombre}
-                        </b>
-
-                        <br><br>
-
-                        🎨 Color
-
-                        <br>
-
-                        <input
-
-                            type="color"
-
-                            value="${
-                                data.color ||
-                                "#3388ff"
-                            }"
-
-                            onchange="
-                                cambiarColorPunto(
-                                    '${docSnap.id}',
-                                    this.value
-                                )
-                            "
-
-                        >
-
-                        <br><br>
-
-                        😀 Icono
-
-                        <br>
-
-                        <select
-
-                            onchange="
-                                cambiarIconoPunto(
-                                    '${docSnap.id}',
-                                    this.value
-                                )
-                            "
-
-                        >
-
-                            ${opciones}
-
-                        </select>
-
-                        <br><br>
-
-                        <button
-
-                            onclick="
-                                cambiarVisibilidadPunto(
-                                    '${docSnap.id}',
-                                    ${!data.publico}
-                                )
-                            "
-
-                        >
-
-                            ${
-                                data.publico
-                                ?
-                                "🔒 Hacer privado"
-                                :
-                                "🌍 Hacer público"
-                            }
-
-                        </button>
-
-                        <br><br>
-
-                        <button
-
-                            onclick="
-                                eliminarPuntoAdmin(
-                                    '${docSnap.id}'
-                                )
-                            "
-
-                        >
-
-                            🗑 Eliminar
-
-                        </button>
-
-                    `);
-
-                }else{
-
-                    marcador.bindPopup(`
-
-                        <b>
-                            ${data.nombre}
-                        </b>
-
-                    `);
-
-                }
-
-
-                marcadoresPuntos.push(
-                    marcador
-                );
+            className:"nombrePuntoAdmin"
 
             }
+
         );
 
-    }catch(error){
 
-        console.error(
-            "Error cargando puntos:",
-            error
-        );
 
-    }
+
+
+        // =========================
+        // OPCIONES ADMIN
+        // =========================
+
+        if(esAdmin){
+
+
+            let opciones="";
+
+
+            ICONOS_PUNTO.forEach(i=>{
+
+
+                opciones+=`
+
+                <option value="${i}"
+
+                ${
+                (data.icono||"PIN")===i
+                ?"selected"
+                :""
+                }
+
+                >
+
+                ${i==="PIN"?"📌 Pin":i}
+
+                </option>
+
+                `;
+
+
+            });
+
+
+
+            marcador.bindPopup(`
+
+
+            <b>${data.nombre}</b>
+
+
+            <br><br>
+
+
+            🎨 Color
+
+            <br>
+
+
+            <input
+
+            type="color"
+
+            value="${data.color || "#3388ff"}"
+
+            onchange="
+            cambiarColorPunto('${docSnap.id}',this.value)
+            "
+
+            >
+
+
+            <br><br>
+
+
+            😀 Icono
+
+            <br>
+
+
+            <select
+
+            onchange="
+            cambiarIconoPunto('${docSnap.id}',this.value)
+            "
+
+            >
+
+            ${opciones}
+
+            </select>
+
+
+            <br><br>
+
+
+            <button
+
+            onclick="
+            cambiarVisibilidadPunto(
+            '${docSnap.id}',
+            ${!data.publico}
+            )
+            "
+
+            >
+
+            ${
+            data.publico
+            ?
+            "🔒 Hacer privado"
+            :
+            "🌍 Hacer público"
+            }
+
+            </button>
+
+
+            <br><br>
+
+
+            <button
+
+            onclick="
+            eliminarPuntoAdmin('${docSnap.id}')
+            "
+
+            >
+
+            🗑 Eliminar
+
+            </button>
+
+
+            `);
+
+
+        }else{
+
+
+            marcador.bindPopup(`
+
+            <b>${data.nombre}</b>
+
+            `);
+
+        }
+
+
+
+        marcadoresPuntos.push(marcador);
+
+
+
+    });
+
 
 }
+
+
+
 
 
 // =========================
 // CAMBIAR COLOR
 // =========================
 
-window.cambiarColorPunto =
-async function(
-    id,
-    color
-){
+window.cambiarColorPunto=async(id,color)=>{
+
 
     await updateDoc(
 
-        doc(
-            db,
-            "puntosAdmin",
-            id
-        ),
+        doc(db,"puntosAdmin",id),
 
         {
-
             color
-
         }
 
     );
@@ -3825,31 +2901,25 @@ async function(
 
     cargarPuntosAdmin();
 
+
 };
+
+
 
 
 // =========================
 // CAMBIAR ICONO
 // =========================
 
-window.cambiarIconoPunto =
-async function(
-    id,
-    icono
-){
+window.cambiarIconoPunto=async(id,icono)=>{
+
 
     await updateDoc(
 
-        doc(
-            db,
-            "puntosAdmin",
-            id
-        ),
+        doc(db,"puntosAdmin",id),
 
         {
-
             icono
-
         }
 
     );
@@ -3857,31 +2927,25 @@ async function(
 
     cargarPuntosAdmin();
 
+
 };
 
 
+
+
 // =========================
-// VISIBILIDAD
+// PUBLICO / PRIVADO
 // =========================
 
-window.cambiarVisibilidadPunto =
-async function(
-    id,
-    publico
-){
+window.cambiarVisibilidadPunto=async(id,publico)=>{
+
 
     await updateDoc(
 
-        doc(
-            db,
-            "puntosAdmin",
-            id
-        ),
+        doc(db,"puntosAdmin",id),
 
         {
-
             publico
-
         }
 
     );
@@ -3889,446 +2953,104 @@ async function(
 
     cargarPuntosAdmin();
 
+
 };
 
 
+
+
 // =========================
-// ELIMINAR PUNTO
+// ELIMINAR
 // =========================
 
-window.eliminarPuntoAdmin =
-async function(id){
+window.eliminarPuntoAdmin=async(id)=>{
 
-    if(
-        !confirm(
-            "¿Eliminar este punto?"
-        )
-    ){
 
-        return;
+    if(!confirm("¿Eliminar este punto?"))
+    return;
 
-    }
 
 
     await deleteDoc(
 
-        doc(
-            db,
-            "puntosAdmin",
-            id
-        )
+        doc(db,"puntosAdmin",id)
 
     );
 
 
     cargarPuntosAdmin();
 
-};
 
+};
 
 // =========================
 // MOSTRAR / OCULTAR CLIMA
 // =========================
 
-document
-.getElementById(
-    "toggleClima"
-)
-.onclick = ()=>{
+document.getElementById("toggleClima").onclick=()=>{
 
-    climaVisible =
-        !climaVisible;
+    climaVisible=!climaVisible;
 
+    climaMarkers.forEach(marker=>{
 
-    climaMarkers.forEach(
-        marker=>{
+        if(climaVisible){
 
-            if(climaVisible){
+            if(!map.hasLayer(marker)){
 
-                if(
-                    !map.hasLayer(marker)
-                ){
+                marker.addTo(map);
 
-                    marker.addTo(map);
-
-                }
-
-            }else{
-
-                if(
-                    map.hasLayer(marker)
-                ){
-
-                    map.removeLayer(
-                        marker
-                    );
-
-                }
-
-            }
-
-        }
-    );
-
-
-    document
-    .getElementById(
-        "toggleClima"
-    )
-    .innerText =
-
-        climaVisible
-
-        ?
-
-        "🌤 Ocultar clima"
-
-        :
-
-        "🌤 Mostrar clima";
-
-};
-
-
-// =========================
-// ZOOM
-// =========================
-
-map.on(
-    "zoomend",
-    ()=>{
-
-        const mostrar =
-            map.getZoom() >= 15;
-
-
-        map.eachLayer(
-            layer=>{
-
-                if(
-                    !layer.getTooltip
-                ){
-
-                    return;
-
-                }
-
-
-                const tooltip =
-                    layer.getTooltip();
-
-
-                if(!tooltip){
-
-                    return;
-
-                }
-
-
-                if(mostrar){
-
-                    layer.openTooltip();
-
-                }else{
-
-                    layer.closeTooltip();
-
-                }
-
-            }
-        );
-
-
-        // Controlar visibilidad de las letras personalizadas según el zoom
-        marcadoresLetras.forEach(item => {
-            if(mostrar){
-                item.marker.setOpacity(1);
-            } else {
-                item.marker.setOpacity(0);
-            }
-        });
-
-    }
-);
-
-
-// =========================
-// LETRAS ADMIN
-// =========================
-
-let modoAgregarLetra = false;
-let marcadoresLetras = [];
-
-const btnLetras = document.getElementById("administrarLetras");
-
-if(btnLetras){
-
-    btnLetras.onclick = ()=>{
-
-        if(!esAdmin){
-            alert("Solo administradores pueden gestionar letras.");
-            return;
-        }
-
-        modoAgregarLetra = !modoAgregarLetra;
-
-        if(modoAgregarLetra){
-
-            alert("Hacé clic en el mapa para colocar una letra o texto.");
-            btnLetras.innerText = "❌ Cancelar letra";
-
-            const seccionLetras = document.getElementById("letras-section");
-            if(seccionLetras){
-                seccionLetras.style.display = "block";
-                cargarListaLetrasAdmin();
             }
 
         }else{
 
-            btnLetras.innerText = "🔤 Letras";
-            const seccionLetras = document.getElementById("letras-section");
-            if(seccionLetras){
-                seccionLetras.style.display = "none";
+            if(map.hasLayer(marker)){
+
+                map.removeLayer(marker);
+
             }
 
         }
 
-    };
-
-}
-
-window.cerrarLetras = ()=>{
-
-    modoAgregarLetra = false;
-    if(btnLetras) btnLetras.innerText = "🔤 Letras";
-
-    const seccionLetras = document.getElementById("letras-section");
-    if(seccionLetras){
-        seccionLetras.style.display = "none";
-    }
-
-};
-
-
-// =========================
-// CREAR LETRA O PUNTO EN MAPA (Click General Unificado)
-// =========================
-
-map.on("click", async(e)=>{
-
-    if(!esAdmin) return;
-
-    // 1. Si está activo el modo agregar punto
-    if(modoAgregarPunto){
-        const nombre = prompt("Nombre del punto:");
-        if(!nombre){
-            modoAgregarPunto = false;
-            document.getElementById("administrarPuntos").innerText = "📍 Puntos";
-            return;
-        }
-
-        const icono = prompt(
-`Elegí un icono:
-
-🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
-
-Escribí uno`,
-            "📍"
-        );
-
-        try{
-            await addDoc(collection(db, "puntosAdmin"), {
-                nombre: nombre.trim(),
-                lat: e.latlng.lat,
-                lng: e.latlng.lng,
-                color: "#3388ff",
-                publico: false,
-                icono: icono || "📍",
-                creadoPor: currentUser?.email || "",
-                fecha: Date.now()
-            });
-
-            modoAgregarPunto = false;
-            document.getElementById("administrarPuntos").innerText = "📍 Puntos";
-            cargarPuntosAdmin();
-        }catch(error){
-            console.error("Error creando punto:", error);
-            alert("No se pudo crear el punto.");
-        }
-        return;
-    }
-
-    // 2. Si está activo el modo agregar letra
-    if(modoAgregarLetra){
-        const textoLetra = prompt("Escribí el texto o letra a mostrar:");
-        if(!textoLetra){
-            modoAgregarLetra = false;
-            if(btnLetras) btnLetras.innerText = "🔤 Letras";
-            return;
-        }
-
-        try{
-            await addDoc(collection(db, "letrasAdmin"), {
-                texto: textoLetra.trim(),
-                lat: e.latlng.lat,
-                lng: e.latlng.lng,
-                creadoPor: currentUser?.email || "",
-                fecha: Date.now()
-            });
-
-            modoAgregarLetra = false;
-            if(btnLetras) btnLetras.innerText = "🔤 Letras";
-
-            alert("Letra agregada correctamente ✅");
-            cargarLetrasAdmin();
-            cargarListaLetrasAdmin();
-        }catch(error){
-            console.error("Error creando letra:", error);
-            alert("No se pudo crear la letra.");
-        }
-    }
-
-});
-
-
-// =========================
-// CARGAR LETRAS EN EL MAPA (Visible para admins y usuarios)
-// =========================
-
-async function cargarLetrasAdmin(){
-
-    marcadoresLetras.forEach(item=>{
-        if(map.hasLayer(item.marker)){
-            map.removeLayer(item.marker);
-        }
     });
 
-    marcadoresLetras = [];
+    document.getElementById("toggleClima").innerText=
 
-    if(esInvitado) return;
+        climaVisible
 
-    if(!navigator.onLine) return;
+        ? "🌤 Ocultar clima"
 
-    try{
+        : "🌤 Mostrar clima";
 
-        const snapshot = await getDocs(collection(db, "letrasAdmin"));
-
-        snapshot.forEach(docSnap=>{
-
-            const data = docSnap.data();
-
-            const iconoLetra = L.divIcon({
-                html: `<div style="
-                    background: rgba(0, 0, 0, 0.75);
-                    color: white;
-                    padding: 3px 6px;
-                    border-radius: 4px;
-                    font-weight: bold;
-                    font-size: 14px;
-                    white-space: nowrap;
-                    border: 1px solid white;
-                    text-shadow: 1px 1px 2px black;
-                ">${data.texto}</div>`,
-                className: "",
-                iconSize: [40, 20],
-                iconAnchor: [20, 10]
-            });
-
-            const marcador = L.marker([data.lat, data.lng], {
-                icon: iconoLetra
-            }).addTo(map);
-
-            const mostrarAlHacerZoom = map.getZoom() >= 15;
-            
-            if(mostrarAlHacerZoom){
-                marcador.setOpacity(1);
-            } else {
-                marcador.setOpacity(0);
-            }
-
-            if(esAdmin){
-                marcador.bindPopup(`
-                    <b>Texto:</b> ${data.texto}<br><br>
-                    <button onclick="eliminarLetraAdmin('${docSnap.id}')">🗑 Eliminar letra</button>
-                `);
-            } else {
-                marcador.bindPopup(`
-                    <b>Texto:</b> ${data.texto}
-                `);
-            }
-
-            marcadoresLetras.push({ marker: marcador, data });
-
-        });
-
-    }catch(error){
-        console.error("Error cargando letras:", error);
-    }
-
-}
-
-
-// =========================
-// ELIMINAR LETRA
-// =========================
-
-window.eliminarLetraAdmin = async function(id){
-    if(!confirm("¿Eliminar esta letra del mapa?")) return;
-
-    try{
-        await deleteDoc(doc(db, "letrasAdmin", id));
-        alert("Letra eliminada ✅");
-        cargarLetrasAdmin();
-        cargarListaLetrasAdmin();
-    }catch(err){
-        console.error("Error al eliminar letra:", err);
-        alert("No se pudo eliminar.");
-    }
 };
 
-
 // =========================
-// PANEL LISTA DE LETRAS
+// MOSTRAR / OCULTAR NOMBRES SEGÚN ZOOM
 // =========================
 
-async function cargarListaLetrasAdmin(){
-    const contenedor = document.getElementById("lista-letras");
-    if(!contenedor) return;
+map.on("zoomend",()=>{
 
-    contenedor.innerHTML = "<p>Cargando letras...</p>";
+    const mostrar = map.getZoom() >= 15;
 
-    try{
-        const snapshot = await getDocs(collection(db, "letrasAdmin"));
-        let html = "<h4>🔤 Letras ubicadas</h4>";
+    map.eachLayer(layer=>{
 
-        if(snapshot.empty){
-            contenedor.innerHTML = "<p>No hay letras creadas todavía.</p>";
-            return;
+        if(layer.getTooltip){
+
+            const tooltip = layer.getTooltip();
+
+            if(!tooltip) return;
+
+            if(mostrar){
+
+                layer.openTooltip();
+
+            }else{
+
+                layer.closeTooltip();
+
+            }
+
         }
 
-        snapshot.forEach(docSnap=>{
-            const data = docSnap.data();
-            html += `
-                <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px;">
-                    <b>${data.texto}</b><br>
-                    <small>Lat: ${data.lat.toFixed(4)}, Lng: ${data.lng.toFixed(4)}</small><br>
-                    <button onclick="eliminarLetraAdmin('${docSnap.id}')" style="margin-top:5px;">🗑 Eliminar</button>
-                </div>
-            `;
-        });
+    });
 
-        contenedor.innerHTML = html;
-
-    }catch(err){
-        console.error("Error al listar letras:", err);
-        contenedor.innerHTML = "<p>Error al cargar las letras.</p>";
-    }
-}
-
-// =========================
-// FIN APP
-// =========================
-
-console.log(
-    "✅ APP.JS cargado correctamente"
-);
+});
