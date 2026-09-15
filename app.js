@@ -3427,136 +3427,6 @@ document
 
 
 // =========================
-// CREAR PUNTO
-// =========================
-
-map.on(
-    "click",
-    async(e)=>{
-
-        if(!esAdmin){
-
-            return;
-
-        }
-
-
-        if(!modoAgregarPunto){
-
-            return;
-
-        }
-
-
-        const nombre =
-        prompt(
-            "Nombre del punto:"
-        );
-
-
-        if(!nombre){
-
-            modoAgregarPunto =
-                false;
-
-
-            document
-            .getElementById(
-                "administrarPuntos"
-            )
-            .innerText =
-                "📍 Puntos";
-
-
-            return;
-
-        }
-
-
-        const icono =
-        prompt(
-`Elegí un icono:
-
-🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
-
-Escribí uno`,
-            "📍"
-        );
-
-
-        try{
-
-            await addDoc(
-
-                collection(
-                    db,
-                    "puntosAdmin"
-                ),
-
-                {
-
-                    nombre:
-                        nombre.trim(),
-
-                    lat:
-                        e.latlng.lat,
-
-                    lng:
-                        e.latlng.lng,
-
-                    color:
-                        "#3388ff",
-
-                    publico:
-                        false,
-
-                    icono:
-                        icono || "📍",
-
-                    creadoPor:
-                        currentUser?.email || "",
-
-                    fecha:
-                        Date.now()
-
-                }
-
-            );
-
-
-            modoAgregarPunto =
-                false;
-
-
-            document
-            .getElementById(
-                "administrarPuntos"
-            )
-            .innerText =
-                "📍 Puntos";
-
-
-            cargarPuntosAdmin();
-
-        }catch(error){
-
-            console.error(
-                "Error creando punto:",
-                error
-            );
-
-
-            alert(
-                "No se pudo crear el punto."
-            );
-
-        }
-
-    }
-);
-
-
-// =========================
 // CARGAR PUNTOS
 // =========================
 
@@ -4241,41 +4111,81 @@ window.cerrarLetras = ()=>{
 
 
 // =========================
-// CREAR LETRA EN MAPA (Click)
+// CREAR LETRA O PUNTO EN MAPA (Click General Unificado)
 // =========================
 
 map.on("click", async(e)=>{
 
-    if(!esAdmin || !modoAgregarLetra) return;
+    if(!esAdmin) return;
 
-    const textoLetra = prompt("Escribí el texto o letra a mostrar:");
+    // 1. Si está activo el modo agregar punto
+    if(modoAgregarPunto){
+        const nombre = prompt("Nombre del punto:");
+        if(!nombre){
+            modoAgregarPunto = false;
+            document.getElementById("administrarPuntos").innerText = "📍 Puntos";
+            return;
+        }
 
-    if(!textoLetra){
-        modoAgregarLetra = false;
-        if(btnLetras) btnLetras.innerText = "🔤 Letras";
+        const icono = prompt(
+`Elegí un icono:
+
+🏠 🌳 ⚠️ ⭐ 🚗 ⛔ 🏢
+
+Escribí uno`,
+            "📍"
+        );
+
+        try{
+            await addDoc(collection(db, "puntosAdmin"), {
+                nombre: nombre.trim(),
+                lat: e.latlng.lat,
+                lng: e.latlng.lng,
+                color: "#3388ff",
+                publico: false,
+                icono: icono || "📍",
+                creadoPor: currentUser?.email || "",
+                fecha: Date.now()
+            });
+
+            modoAgregarPunto = false;
+            document.getElementById("administrarPuntos").innerText = "📍 Puntos";
+            cargarPuntosAdmin();
+        }catch(error){
+            console.error("Error creando punto:", error);
+            alert("No se pudo crear el punto.");
+        }
         return;
     }
 
-    try{
+    // 2. Si está activo el modo agregar letra
+    if(modoAgregarLetra){
+        const textoLetra = prompt("Escribí el texto o letra a mostrar:");
+        if(!textoLetra){
+            modoAgregarLetra = false;
+            if(btnLetras) btnLetras.innerText = "🔤 Letras";
+            return;
+        }
 
-        await addDoc(collection(db, "letrasAdmin"), {
-            texto: textoLetra.trim(),
-            lat: e.latlng.lat,
-            lng: e.latlng.lng,
-            creadoPor: currentUser?.email || "",
-            fecha: Date.now()
-        });
+        try{
+            await addDoc(collection(db, "letrasAdmin"), {
+                texto: textoLetra.trim(),
+                lat: e.latlng.lat,
+                lng: e.latlng.lng,
+                creadoPor: currentUser?.email || "",
+                fecha: Date.now()
+            });
 
-        modoAgregarLetra = false;
-        if(btnLetras) btnLetras.innerText = "🔤 Letras";
+            modoAgregarLetra = false;
+            if(btnLetras) btnLetras.innerText = "🔤 Letras";
 
-        alert("Letra agregada correctamente ✅");
-        cargarLetrasAdmin();
-        cargarListaLetrasAdmin();
-
-    }catch(error){
-        console.error("Error creando letra:", error);
-        alert("No se pudo crear la letra.");
+            alert("Letra agregada correctamente ✅");
+            cargarLetrasAdmin();
+            cargarListaLetrasAdmin();
+        }catch(error){
+            console.error("Error creando letra:", error);
+            alert("No se pudo crear la letra.");
+        }
     }
 
 });
@@ -4287,16 +4197,14 @@ map.on("click", async(e)=>{
 
 async function cargarLetrasAdmin(){
 
-    marcadoresLetras.forEach(marker=>{
-        if(map.hasLayer(marker)){
-            map.removeLayer(marker);
+    marcadoresLetras.forEach(item=>{
+        if(map.hasLayer(item.marker)){
+            map.removeLayer(item.marker);
         }
     });
 
     marcadoresLetras = [];
 
-    // Si es invitado y decidiste que no vea letras, puedes retornar aquí. 
-    // Como pediste que sean visibles para usuarios y admins, dejamos pasar a ambos.
     if(esInvitado) return;
 
     if(!navigator.onLine) return;
@@ -4309,7 +4217,6 @@ async function cargarLetrasAdmin(){
 
             const data = docSnap.data();
 
-            // Creamos un divIcon transparente con estilo de texto flotante
             const iconoLetra = L.divIcon({
                 html: `<div style="
                     background: rgba(0, 0, 0, 0.75);
@@ -4331,7 +4238,6 @@ async function cargarLetrasAdmin(){
                 icon: iconoLetra
             }).addTo(map);
 
-            // Se mostrará solo si el zoom es >= 15 (igual que los nombres de puntos)
             const mostrarAlHacerZoom = map.getZoom() >= 15;
             
             if(mostrarAlHacerZoom){
@@ -4340,7 +4246,6 @@ async function cargarLetrasAdmin(){
                 marcador.setOpacity(0);
             }
 
-            // Popup: Si es admin puede ver y eliminar, el usuario común solo ve el texto
             if(esAdmin){
                 marcador.bindPopup(`
                     <b>Texto:</b> ${data.texto}<br><br>
