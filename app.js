@@ -1037,65 +1037,18 @@ onAuthStateChanged(
         // =========================
         // ADMIN
         // =========================
-
         if(esAdmin){
 
-            document
-            .getElementById(
-                "toggleLocation"
-            )
-            .style.display =
-                "block";
-
-
-            document
-            .getElementById(
-                "toggleClima"
-            )
-            .style.display =
-                "block";
-
-
-            document
-            .getElementById(
-                "editarMallas"
-            )
-            .style.display =
-                "block";
-
-
-            document
-            .getElementById(
-                "administrarAdmins"
-            )
-            .style.display =
-                "block";
-
-
-            document
-            .getElementById(
-                "administrarPuntos"
-            )
-            .style.display =
-                "block";
-
-
-            document
-            .getElementById(
-                "administrarLetras"
-            )
-            .style.display =
-                "block";
-
+            document.getElementById("toggleLocation").style.display = "block";
+            document.getElementById("toggleClima").style.display = "block";
+            document.getElementById("editarMallas").style.display = "block";
+            document.getElementById("administrarAdmins").style.display = "block";
+            document.getElementById("administrarPuntos").style.display = "block";
+            document.getElementById("administrarLetras").style.display = "block";
 
             actualizarPosicionBotones();
-
-
             await recargarMapa();
-
-
             return;
-
         }
 
 
@@ -2651,6 +2604,13 @@ async function recargarMapa(){
     // =========================
 
     await cargarPuntosAdmin();
+
+
+    // =========================
+    // CARGAR LETRAS
+    // =========================
+
+    await cargarLetrasAdmin();
 
 }
 
@@ -4208,40 +4168,58 @@ map.on(
             }
         );
 
+
+        // Controlar visibilidad de las letras personalizadas según el zoom
+        marcadoresLetras.forEach(item => {
+            if(mostrar){
+                item.marker.setOpacity(1);
+            } else {
+                item.marker.setOpacity(0);
+            }
+        });
+
     }
 );
 
 
 // =========================
-// ADMINISTRAR LETRAS
+// LETRAS ADMIN
 // =========================
 
-const btnLetras =
-document.getElementById(
-    "administrarLetras"
-);
+let modoAgregarLetra = false;
+let marcadoresLetras = [];
 
+const btnLetras = document.getElementById("administrarLetras");
 
 if(btnLetras){
 
     btnLetras.onclick = ()=>{
 
-        const seccionLetras =
-        document.getElementById(
-            "letras-section"
-        );
+        if(!esAdmin){
+            alert("Solo administradores pueden gestionar letras.");
+            return;
+        }
 
+        modoAgregarLetra = !modoAgregarLetra;
 
-        if(seccionLetras){
+        if(modoAgregarLetra){
 
-            seccionLetras.style.display =
-                "block";
+            alert("Hacé clic en el mapa para colocar una letra o texto.");
+            btnLetras.innerText = "❌ Cancelar letra";
+
+            const seccionLetras = document.getElementById("letras-section");
+            if(seccionLetras){
+                seccionLetras.style.display = "block";
+                cargarListaLetrasAdmin();
+            }
 
         }else{
 
-            console.log(
-                "ℹ️ Panel de letras todavía no existe en el HTML."
-            );
+            btnLetras.innerText = "🔤 Letras";
+            const seccionLetras = document.getElementById("letras-section");
+            if(seccionLetras){
+                seccionLetras.style.display = "none";
+            }
 
         }
 
@@ -4249,24 +4227,198 @@ if(btnLetras){
 
 }
 
-
 window.cerrarLetras = ()=>{
 
-    const seccionLetras =
-    document.getElementById(
-        "letras-section"
-    );
+    modoAgregarLetra = false;
+    if(btnLetras) btnLetras.innerText = "🔤 Letras";
 
-
+    const seccionLetras = document.getElementById("letras-section");
     if(seccionLetras){
-
-        seccionLetras.style.display =
-            "none";
-
+        seccionLetras.style.display = "none";
     }
 
 };
 
+
+// =========================
+// CREAR LETRA EN MAPA (Click)
+// =========================
+
+map.on("click", async(e)=>{
+
+    if(!esAdmin || !modoAgregarLetra) return;
+
+    const textoLetra = prompt("Escribí el texto o letra a mostrar:");
+
+    if(!textoLetra){
+        modoAgregarLetra = false;
+        if(btnLetras) btnLetras.innerText = "🔤 Letras";
+        return;
+    }
+
+    try{
+
+        await addDoc(collection(db, "letrasAdmin"), {
+            texto: textoLetra.trim(),
+            lat: e.latlng.lat,
+            lng: e.latlng.lng,
+            creadoPor: currentUser?.email || "",
+            fecha: Date.now()
+        });
+
+        modoAgregarLetra = false;
+        if(btnLetras) btnLetras.innerText = "🔤 Letras";
+
+        alert("Letra agregada correctamente ✅");
+        cargarLetrasAdmin();
+        cargarListaLetrasAdmin();
+
+    }catch(error){
+        console.error("Error creando letra:", error);
+        alert("No se pudo crear la letra.");
+    }
+
+});
+
+
+// =========================
+// CARGAR LETRAS EN EL MAPA (Visible para admins y usuarios)
+// =========================
+
+async function cargarLetrasAdmin(){
+
+    marcadoresLetras.forEach(marker=>{
+        if(map.hasLayer(marker)){
+            map.removeLayer(marker);
+        }
+    });
+
+    marcadoresLetras = [];
+
+    // Si es invitado y decidiste que no vea letras, puedes retornar aquí. 
+    // Como pediste que sean visibles para usuarios y admins, dejamos pasar a ambos.
+    if(esInvitado) return;
+
+    if(!navigator.onLine) return;
+
+    try{
+
+        const snapshot = await getDocs(collection(db, "letrasAdmin"));
+
+        snapshot.forEach(docSnap=>{
+
+            const data = docSnap.data();
+
+            // Creamos un divIcon transparente con estilo de texto flotante
+            const iconoLetra = L.divIcon({
+                html: `<div style="
+                    background: rgba(0, 0, 0, 0.75);
+                    color: white;
+                    padding: 3px 6px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    white-space: nowrap;
+                    border: 1px solid white;
+                    text-shadow: 1px 1px 2px black;
+                ">${data.texto}</div>`,
+                className: "",
+                iconSize: [40, 20],
+                iconAnchor: [20, 10]
+            });
+
+            const marcador = L.marker([data.lat, data.lng], {
+                icon: iconoLetra
+            }).addTo(map);
+
+            // Se mostrará solo si el zoom es >= 15 (igual que los nombres de puntos)
+            const mostrarAlHacerZoom = map.getZoom() >= 15;
+            
+            if(mostrarAlHacerZoom){
+                marcador.setOpacity(1);
+            } else {
+                marcador.setOpacity(0);
+            }
+
+            // Popup: Si es admin puede ver y eliminar, el usuario común solo ve el texto
+            if(esAdmin){
+                marcador.bindPopup(`
+                    <b>Texto:</b> ${data.texto}<br><br>
+                    <button onclick="eliminarLetraAdmin('${docSnap.id}')">🗑 Eliminar letra</button>
+                `);
+            } else {
+                marcador.bindPopup(`
+                    <b>Texto:</b> ${data.texto}
+                `);
+            }
+
+            marcadoresLetras.push({ marker: marcador, data });
+
+        });
+
+    }catch(error){
+        console.error("Error cargando letras:", error);
+    }
+
+}
+
+
+// =========================
+// ELIMINAR LETRA
+// =========================
+
+window.eliminarLetraAdmin = async function(id){
+    if(!confirm("¿Eliminar esta letra del mapa?")) return;
+
+    try{
+        await deleteDoc(doc(db, "letrasAdmin", id));
+        alert("Letra eliminada ✅");
+        cargarLetrasAdmin();
+        cargarListaLetrasAdmin();
+    }catch(err){
+        console.error("Error al eliminar letra:", err);
+        alert("No se pudo eliminar.");
+    }
+};
+
+
+// =========================
+// PANEL LISTA DE LETRAS
+// =========================
+
+async function cargarListaLetrasAdmin(){
+    const contenedor = document.getElementById("lista-letras");
+    if(!contenedor) return;
+
+    contenedor.innerHTML = "<p>Cargando letras...</p>";
+
+    try{
+        const snapshot = await getDocs(collection(db, "letrasAdmin"));
+        let html = "<h4>🔤 Letras ubicadas</h4>";
+
+        if(snapshot.empty){
+            contenedor.innerHTML = "<p>No hay letras creadas todavía.</p>";
+            return;
+        }
+
+        snapshot.forEach(docSnap=>{
+            const data = docSnap.data();
+            html += `
+                <div style="border-bottom:1px solid #ccc; margin-bottom:8px; padding-bottom:8px;">
+                    <b>${data.texto}</b><br>
+                    <small>Lat: ${data.lat.toFixed(4)}, Lng: ${data.lng.toFixed(4)}</small><br>
+                    <button onclick="eliminarLetraAdmin('${docSnap.id}')" style="margin-top:5px;">🗑 Eliminar</button>
+                </div>
+            `;
+        });
+
+        contenedor.innerHTML = html;
+
+    }catch(err){
+        console.error("Error al listar letras:", err);
+        contenedor.innerHTML = "<p>Error al cargar las letras.</p>";
+    }
+}
 
 // =========================
 // FIN APP
