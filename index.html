@@ -11,792 +11,306 @@
 
 <title>Mapa Territorios</title>
 
-<!-- =========================
-     LEAFLET
-========================= -->
+<!-- Estilos Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
 
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet/dist/leaflet.css"
->
-
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css"
->
-
-<!-- =========================
-     PWA
-========================= -->
-
+<!-- Manifest y PWA -->
 <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3388ff">
+<link rel="icon" type="image/jpeg" href="iconoapp.jpeg">
+<link rel="apple-touch-icon" href="iconoapp.jpeg">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-<meta
-    name="theme-color"
-    content="#3388ff"
->
-
-<link
-    rel="icon"
-    type="image/jpeg"
-    href="iconoapp.jpeg"
->
-
-<link
-    rel="apple-touch-icon"
-    href="iconoapp.jpeg"
->
-
-<meta
-    name="apple-mobile-web-app-status-bar-style"
-    content="black"
->
-
-<!-- =========================
-     SCRIPTS
-========================= -->
-
+<!-- Scripts necesarios para el Mapa -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script src="https://html2canvas.hertzen.com/leaflet/html2canvas.min.js"></script>
 
 <style>
-
-/* =========================
-   GENERAL
-========================= -->
-
 body{
-
     margin:0;
-
     font-family:Arial,sans-serif;
-
 }
-
 #map{
-
     width:100%;
-
     height:100vh;
-
 }
-
 button{
-
     cursor:pointer;
-
     font-size:14px;
-
 }
-
-
-/* =========================
-   BOTONES FLOTANTES
-========================= -->
 
 #toggleLocation,
-#toggleClima,
 #editarMallas,
 #administrarAdmins,
 #administrarPuntos,
-#administrarLetras{
-
+#administrarLetras,
+#toggleClima{
     position:absolute;
-
     right:10px;
-
     z-index:1000;
-
     padding:8px 10px;
-
     border:none;
-
     border-radius:8px;
-
     background:white;
-
     box-shadow:0 0 5px rgba(0,0,0,.3);
-
 }
 
-
-/* =========================
-   BOTÓN MENÚ
-========================= -->
-
+/* BOTÓN MENÚ */
 #menuBoton{
-
     position:absolute;
-
     top:10px;
-
     right:10px;
-
     width:48px;
-
     height:48px;
-
     border:none;
-
     border-radius:12px;
-
     background:white;
-
     box-shadow:0 0 8px rgba(0,0,0,.3);
-
     z-index:1001;
-
     font-size:24px;
-
     cursor:pointer;
-
 }
-
-
-/* =========================
-   LOGIN
-========================= -->
 
 #login{
-
     width:100%;
-
     padding:12px;
-
     border:none;
-
     border-radius:8px;
-
     background:#3388ff;
-
     color:white;
-
     font-size:15px;
-
     box-shadow:none;
-
 }
 
-
-/* =========================
-   POSICIONES
-========================= -->
-
-#toggleLocation{
-    top:50px;
-}
-
-#editarMallas{
-    top:90px;
-}
-
-#administrarAdmins{
-    top:130px;
-}
-
-#administrarPuntos{
-    top:170px;
-}
-
-#administrarLetras{
-    top:210px;
-}
-
-#toggleClima{
-    top:250px;
-}
-
-
-/* =========================
-   PANELES
-========================= -->
+/* Posiciones de los botones del menú */
+#toggleLocation{ top:50px; }
+#editarMallas{ top:90px; }
+#administrarAdmins{ top:130px; }
+#administrarPuntos{ top:170px; }
+#administrarLetras{ top:210px; }
+#toggleClima{ top:250px; }
 
 .panel{
-
     display:none;
-
     position:absolute;
-
     top:290px;
-
     right:10px;
-
     width:300px;
-
     max-height:400px;
-
     overflow:auto;
-
     background:white;
-
     padding:10px;
-
     border-radius:10px;
-
     z-index:1000;
-
     box-shadow:0 0 10px rgba(0,0,0,.3);
-
 }
-
-
-/* =========================
-   ESTADO DE CONEXIÓN
-========================= -->
 
 #estadoConexion{
-
     position:absolute;
-
     bottom:10px;
-
     left:10px;
-
     z-index:1000;
-
     background:white;
-
     padding:8px 12px;
-
     border-radius:10px;
-
     box-shadow:0 0 5px rgba(0,0,0,.3);
-
     display:flex;
-
     align-items:center;
-
     gap:12px;
-
 }
-
-#textoConexion{
-
-    white-space:nowrap;
-
-}
-
-
-/* =========================
-   BOTÓN CAMBIAR MAPA
-========================= -->
-
-#cambiarMapa{
-
-    border:none;
-
-    background:#3388ff;
-
-    color:white;
-
-    border-radius:8px;
-
-    padding:5px 10px;
-
-    cursor:pointer;
-
-}
-
-
-/* =========================
-   PUNTOS
-========================= -->
 
 .nombrePuntoAdmin{
-
     background:rgba(255,255,255,.90);
-
     border:1px solid #666;
-
     border-radius:6px;
-
     padding:2px 5px;
-
     color:#000;
-
     font-weight:bold;
-
     font-size:10px;
-
     white-space:nowrap;
-
 }
 
 .iconoPuntoMapa{
-
     font-size:18px;
-
     width:24px;
-
     height:24px;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
-    text-shadow:
-        0 0 2px white,
-        0 0 4px black;
-
+    text-shadow: 0 0 2px white, 0 0 4px black;
 }
 
-
-/* =========================
-   NOMBRES DE TERRITORIOS
-========================= -->
-
 .nombreTerritorio{
-
     background:transparent !important;
-
     border:none !important;
-
     box-shadow:none !important;
-
     color:white;
-
     font-size:15px;
-
     font-weight:bold;
-
     text-shadow:
         -1.5px -1.5px 2px black,
          1.5px -1.5px 2px black,
         -1.5px  1.5px 2px black,
          1.5px  1.5px 2px black;
-
     pointer-events:none;
-
 }
 
 .nombreTerritorio::before{
-
     display:none !important;
-
 }
 
-
-/* =========================
-   ICONOS CLIMA
-========================= -->
-
-.emoji-clima{
-
-    display:flex !important;
-
-    align-items:center !important;
-
-    justify-content:center !important;
-
-    font-family:sans-serif;
-
+.emoji-clima {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: sans-serif;
 }
 
-
-/* =========================
-   PANTALLA INICIAL
-========================= -->
-
+/* PANTALLA INICIAL */
 #pantallaInicio{
-
     position:fixed;
-
     inset:0;
-
     background:rgba(0,0,0,.55);
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     z-index:5000;
-
 }
 
 #loginBox{
-
     width:360px;
-
     background:white;
-
     border-radius:14px;
-
     padding:25px;
-
     text-align:center;
-
     box-shadow:0 0 20px rgba(0,0,0,.35);
-
 }
 
 #loginBox h1{
-
     margin-top:0;
-
 }
 
 #loginBox button{
-
     width:100%;
-
     margin-top:10px;
-
     padding:12px;
-
     border:none;
-
     border-radius:8px;
-
     font-size:15px;
-
 }
 
 #continuarInvitado{
-
     background:#e5e5e5;
-
 }
 
-
-/* =========================
-   ANIMACIÓN BOTONES
-========================= -->
-
+/* ANIMACIONES Y ESTADOS DE BOTONES */
 #toggleLocation,
 #toggleClima,
 #editarMallas,
 #administrarAdmins,
 #administrarPuntos,
-#administrarLetras{
-
-    opacity:0;
-
-    transform:translateX(30px);
-
-    transition:
-        opacity .25s ease,
-        transform .25s ease;
-
-    pointer-events:none;
-
-    display:none;
-
+#administrarLetras {
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity .25s ease, transform .25s ease;
+    pointer-events: none;
+    display: none;
 }
-
-
-/* BOTONES VISIBLES */
 
 #toggleLocation.visible,
 #toggleClima.visible,
 #editarMallas.visible,
 #administrarAdmins.visible,
 #administrarPuntos.visible,
-#administrarLetras.visible{
-
-    opacity:1;
-
-    transform:translateX(0);
-
-    pointer-events:auto;
-
-    display:block;
-
+#administrarLetras.visible {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    display: block;
 }
 
-
-/* =========================
-   BOTONES AUXILIARES
-========================= -->
-
 .botonMenu{
-
     opacity:0;
-
     transform:translateX(30px);
-
-    transition:
-        opacity .25s ease,
-        transform .25s ease;
-
+    transition: opacity .25s ease, transform .25s ease;
 }
 
 .botonMenu.visible{
-
     opacity:1;
-
     transform:translateX(0);
-
 }
 
-
-/* =========================
-   RESPONSIVE
-========================= -->
-
-@media(max-width:500px){
-
-    #loginBox{
-
-        width:calc(100% - 40px);
-
-        padding:20px;
-
-    }
-
-    .panel{
-
-        width:calc(100% - 40px);
-
-        right:20px;
-
-        max-height:60vh;
-
-    }
-
-    #estadoConexion{
-
-        max-width:calc(100% - 20px);
-
-        overflow:hidden;
-
-    }
-
+#cambiarMapa{
+    border:none;
+    background:#3388ff;
+    color:white;
+    border-radius:8px;
+    padding:5px 10px;
+    cursor:pointer;
 }
-
 </style>
 
 </head>
-
 <body>
-
-<!-- =========================
-     MAPA
-========================= -->
 
 <div id="map"></div>
 
-
-<!-- =========================
-     PANTALLA INICIAL
-========================= -->
-
+<!-- PANTALLA DE BIENVENIDA -->
 <div id="pantallaInicio">
-
     <div id="loginBox">
-
-        <img
-            src="iconoapp.jpeg"
-            alt="Logo Mapa Territorios"
-            style="
-                width:80px;
-                height:80px;
-                border-radius:8px;
-                margin-bottom:10px;
-                object-fit:cover;
-            "
-        >
-
+        <img src="iconoapp.jpeg" alt="Logo Mapa Territorios" style="width: 80px; height: 80px; border-radius: 8px; margin-bottom: 10px; object-fit: cover;">
         <h1>🗺️ Mapa Territorios</h1>
-
-        <p>
-            Para acceder a todas las funciones iniciá sesión.
-        </p>
-
-        <button id="login">
-            🔐 Iniciar sesión con Google
-        </button>
-
-        <button id="continuarInvitado">
-            👁️ Continuar como invitado
-        </button>
-
+        <p>Para acceder a todas las funciones iniciá sesión.</p>
+        <button id="login">🔐 Iniciar sesión con Google</button>
+        <button id="continuarInvitado">👁️ Continuar como invitado</button>
         <hr>
-
         <small>
-
-            Los usuarios registrados deben ser aprobados
-            por un administrador.
-
+            Los usuarios registrados deben ser aprobados por un administrador.
             Registrarse no otorga permisos de administrador.
-
         </small>
-
     </div>
-
 </div>
 
-
-<!-- =========================
-     BOTONES FLOTANTES
-========================= -->
-
-<button id="menuBoton">
-    ☰
-</button>
-
-<button id="toggleLocation">
-    📍 Mi ubicación
-</button>
-
-<button id="toggleClima">
-    🌤 Clima
-</button>
-
-<button id="editarMallas">
-    🗺️ Editar
-</button>
-
-<button id="administrarAdmins">
-    👥 Admins
-</button>
-
-<button id="administrarPuntos">
-    📍 Puntos
-</button>
-
-<button id="administrarLetras">
-    🔤 Letras
-</button>
-
-
-<!-- =========================
-     ESTADO DE CONEXIÓN
-========================= -->
+<!-- BOTONES FLOTANTES -->
+<button id="menuBoton">☰</button>
+<button id="toggleLocation">📍 Mi ubicación</button>
+<button id="toggleClima">🌤 Clima</button>
+<button id="editarMallas">🗺️ Editar</button>
+<button id="administrarAdmins">👥 Admins</button>
+<button id="administrarPuntos">📍 Puntos</button>
+<button id="administrarLetras">🔤 Letras</button>
 
 <div id="estadoConexion">
-
-    <span id="textoConexion">
-        🌐 Online
-    </span>
-
-    <button id="cambiarMapa">
-        🛰 Satélite
-    </button>
-
-    <button
-        id="btnCompartirUbicacion"
-        class="botonMenu"
-        style="display:none;"
-    >
+    <span id="textoConexion">🌐 Online</span>
+    <button id="cambiarMapa">🛰 Satélite</button>
+    <button id="btnCompartirUbicacion" class="botonMenu" style="display:none;">
         📍 Compartir ubicación: OFF
     </button>
-
 </div>
 
-
-<!-- =========================
-     PANEL MALLAS
-========================= -->
-
-<div
-    id="mallas-section"
-    class="panel"
->
-
-    <h3>
-        🗺️ Mallas
-    </h3>
-
-    <button onclick="cerrarMallas()">
-        Cerrar
-    </button>
-
+<!-- PANEL MALLAS -->
+<div id="mallas-section" class="panel">
+    <h3>🗺️ Mallas</h3>
+    <button onclick="cerrarMallas()">Cerrar</button>
     <div id="lista-mallas"></div>
-
 </div>
 
-
-<!-- =========================
-     PANEL ADMINISTRADORES
-========================= -->
-
-<div
-    id="admins-section"
-    class="panel"
->
-
-    <h3>
-        👥 Administradores
-    </h3>
-
-    <button onclick="cerrarAdmins()">
-        Cerrar
-    </button>
-
+<!-- PANEL ADMINS -->
+<div id="admins-section" class="panel">
+    <h3>👥 Administradores</h3>
+    <button onclick="cerrarAdmins()">Cerrar</button>
     <div id="lista-admins"></div>
-
     <hr>
-
-    <h3>
-        📨 Solicitudes de usuarios
-    </h3>
-
+    <h3>📨 Solicitudes de usuarios</h3>
     <div id="lista-solicitudes"></div>
-
     <hr>
-
-    <input
-        id="nuevoAdminEmail"
-        type="email"
-        placeholder="Correo del nuevo administrador"
-        style="
-            width:100%;
-            margin-bottom:10px;
-        "
-    >
-
-    <button id="agregarAdmin">
-        Agregar administrador
-    </button>
-
+    <input id="nuevoAdminEmail" type="email" placeholder="Correo del nuevo administrador" style="width:100%;margin-bottom:10px;">
+    <button id="agregarAdmin">Agregar administrador</button>
 </div>
-
-
-<!-- =========================
-     PANEL LETRAS (AÑADIDO)
-========================= -->
-
-<div
-    id="letras-section"
-    class="panel"
->
-
-    <h3>
-        🔤 Administración de Letras
-    </h3>
-
-    <button onclick="cerrarLetras()">
-        Cerrar
-    </button>
-
-    <div id="lista-letras">
-        <p>Panel de configuración de etiquetas y textos de mapas.</p>
-    </div>
-
-</div>
-
-
-<!-- =========================
-     LEAFLET DRAW
-========================= -->
 
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
-
-
-<!-- =========================
-     APP
-========================= -->
-
-<script
-    type="module"
-    src="app.js"
-></script>
-
+<script type="module" src="app.js"></script>
 
 </body>
 </html>
